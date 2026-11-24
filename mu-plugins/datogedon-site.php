@@ -87,10 +87,12 @@ add_filter('rank_math/json_ld', function ($data) {
         if (is_single() && in_array('Person', $types, true) && isset($node['@id']) && strpos($node['@id'], '#author') !== false) {
             $node['url'] = get_author_posts_url((int) get_post_field('post_author', get_queried_object_id()));
         }
-        if (is_page('acerca-de') && (in_array('Article', $types, true) || in_array('BlogPosting', $types, true))) {
+        if (is_page() && (in_array('Article', $types, true) || in_array('BlogPosting', $types, true))) {
             unset($node['@type']);
         }
-        if (is_page('acerca-de') && in_array('WebPage', $types, true)) $node['@type'] = 'AboutPage';
+        if (is_page() && in_array('WebPage', $types, true)) {
+            $node['@type'] = is_page('acerca-de') ? 'AboutPage' : (is_page(array('temas','experiencias-con-ia')) ? 'CollectionPage' : (is_page('contacto') ? 'ContactPage' : 'WebPage'));
+        }
     }
     unset($node);
     if (is_author()) {
@@ -111,12 +113,12 @@ add_filter('rank_math/json_ld', function ($data) {
             if (!is_array($node)) continue;
             $types = isset($node['@type']) ? (array)$node['@type'] : array();
             if (in_array('BreadcrumbList',$types,true)) unset($data[$key]);
-            if (in_array('WebPage',$types,true) || in_array('AboutPage',$types,true)) $node['breadcrumb'] = array('@id'=>$id);
+            if (array_intersect(array('WebPage','AboutPage','CollectionPage','ContactPage'), $types)) $node['breadcrumb'] = array('@id'=>$id);
         }
         unset($node);
         $data['datogedon_breadcrumb'] = array('@type'=>'BreadcrumbList','@id'=>$id,'itemListElement'=>$items);
     }
-    // Remove the redundant Article node on About; keep its WebPage and identity.
+    // Static pages are not articles; keep their page and identity nodes.
     foreach ($data as $key => $node) {
         if (is_array($node) && !isset($node['@type']) && isset($node['headline'])) unset($data[$key]);
     }

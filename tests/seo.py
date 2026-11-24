@@ -32,6 +32,10 @@ def check(path):
     p=HTML();p.feed(body);assert p.h1==1,(path,'h1',p.h1);assert len(p.canonical)==1,(path,'canonical',p.canonical);assert 'noindex' not in p.meta.get('robots',''),path
     assert urlsplit(p.canonical[0]).path.rstrip('/')==path.rstrip('/'),(path,p.canonical)
     assert p.ld,(path,'schema missing')
+    if path in ['/temas/','/experiencias-con-ia/','/politica-editorial/','/colabora/','/acerca-de/']:
+        assert not {'Article','BlogPosting'} & types(p),(path,types(p))
+    if path in ['/temas/','/experiencias-con-ia/']:
+        assert 'CollectionPage' in types(p),(path,types(p))
     if path=='/acerca-de/':
         assert 'AboutPage' in types(p) and not {'Article','BlogPosting'} & types(p)
     if path=='/':
