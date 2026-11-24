@@ -33,7 +33,7 @@ code,url,body=fetch(base+'/inteligencia-artificial/');assert code==200 and urlsp
 code,url,body=fetch(base+'/no-existe-estructura-404/');assert code==404,code
 p=HTML();p.feed(body);assert 'noindex' in p.meta.get('robots','')
 code,url,body=fetch(base+'/?s=integracion');p=HTML();p.feed(body);assert 'noindex' in p.meta.get('robots','')
-code,url,body=fetch(base+'/robots.txt');assert 'sitemap.html' not in body and 'wp-sitemap.xml' not in body;assert '/sitemap.xml' in body
+code,url,body=fetch(base+'/robots.txt');assert 'sitemap.html' not in body and 'wp-sitemap.xml' not in body;assert '/sitemap.xml' in body,(code,url,body[:2000])
 if len(sys.argv)>2:
     inventory=json.load(open(sys.argv[2]))
     posts=inventory.get('posts',inventory)
