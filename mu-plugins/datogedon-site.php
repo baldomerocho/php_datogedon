@@ -23,8 +23,9 @@ add_filter('category_link', function ($url, $id) { return datogedon_category_url
 add_action('template_redirect', function () {
     if (is_admin() || is_feed() || is_preview()) return;
     $path = rawurldecode(parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH));
-    if (is_category() && !is_paged()) {
+    if (is_category()) {
         $url = datogedon_category_url(get_queried_object());
+        if (is_paged()) $url .= user_trailingslashit('page/' . (int)get_query_var('paged'), 'paged');
         if (untrailingslashit($path) !== untrailingslashit(parse_url($url, PHP_URL_PATH))) {
             wp_safe_redirect($url, 301, 'Datogedon'); exit;
         }
@@ -33,6 +34,9 @@ add_action('template_redirect', function () {
         $redirects = get_option('datogedon_category_redirects', array());
         $key = '/' . trim($path, '/') . '/';
         if (isset($redirects[$key])) { wp_safe_redirect(home_url($redirects[$key]), 301, 'Datogedon'); exit; }
+        if (preg_match('~^(.*?/)((?:page/[1-9][0-9]*|feed(?:/(?:rss2|rss|atom|rdf))?)/)$~', $key, $match) && isset($redirects[$match[1]])) {
+            wp_safe_redirect(home_url($redirects[$match[1]] . $match[2]), 301, 'Datogedon'); exit;
+        }
     }
 });
 add_filter('rank_math/frontend/canonical', function ($url) {
