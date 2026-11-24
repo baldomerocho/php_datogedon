@@ -52,6 +52,8 @@ jobs:
           php /tmp/wp datogedon configure --owner=1 --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/scripts/route-inventory.php" --path=/tmp/wordpress > /tmp/routes-after.json
           python3 scripts/compare-routes.py /tmp/routes-before.json /tmp/routes-after.json
+          php /tmp/wp rewrite flush --path=/tmp/wordpress
+          php /tmp/wp eval 'echo json_encode(array("home"=>home_url(),"robots_rule"=>array_filter(get_option("rewrite_rules"),fn($v,$k)=>str_contains($k,"robots"),ARRAY_FILTER_USE_BOTH)));' --path=/tmp/wordpress
           php /tmp/wp server --path=/tmp/wordpress --host=127.0.0.1 --port=8094 > /tmp/site.log 2>&1 &
           for attempt in $(seq 1 20); do if curl -fsS http://127.0.0.1:8094/ > /dev/null; then break; fi; sleep 1; done
           python3 tests/seo.py http://127.0.0.1:8094 /tmp/routes-after.json
