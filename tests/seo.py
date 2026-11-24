@@ -45,7 +45,13 @@ def check(path):
 for path in ThreadPoolExecutor(max_workers=4).map(check,paths):print('OK',path)
 code,url,body=fetch(base+'/category/inteligencia-artificial/');assert code==200
 code,url,body=fetch(base+'/inteligencia-artificial/');assert code==200 and urlsplit(url).path=='/category/inteligencia-artificial/',url
-code,url,body=fetch(base+'/inteligencia-artificial/page/2/');assert code==200 and urlsplit(url).path=='/category/inteligencia-artificial/page/2/',(code,url)
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,*args,**kwargs):return None
+try:
+    urllib.request.build_opener(NoRedirect).open(base+'/inteligencia-artificial/page/2/',timeout=30)
+    raise AssertionError('Legacy category pagination must redirect')
+except urllib.error.HTTPError as redirect:
+    assert redirect.code==301 and urlsplit(redirect.headers['Location']).path=='/category/inteligencia-artificial/page/2/',(redirect.code,dict(redirect.headers))
 code,url,body=fetch(base+'/no-existe-estructura-404/');assert code==404,code
 p=HTML();p.feed(body);assert 'noindex' in p.meta.get('robots','')
 code,url,body=fetch(base+'/?s=integracion');p=HTML();p.feed(body);assert 'noindex' in p.meta.get('robots','')
