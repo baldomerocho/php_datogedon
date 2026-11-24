@@ -164,7 +164,8 @@ if (defined('WP_CLI') && WP_CLI) {
         $titles['website_name'] = get_bloginfo('name');
         $titles['knowledgegraph_type'] = 'person';
         $titles['disable_author_archives'] = 'off';
-        $titles['author_archive_robots'] = array('index');
+        $titles['author_custom_robots'] = 'on';
+        $titles['author_robots'] = array('index');
         $titles['homepage_title'] = 'DATOGEDON | Desarrollo de software con IA';
         $titles['homepage_description'] = 'Experiencias reales programando aplicaciones con inteligencia artificial: problemas, decisiones técnicas y colaboración entre personas y asistentes de IA.';
         $titles['open_graph_image'] = get_template_directory_uri().'/assets/social.png';
