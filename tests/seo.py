@@ -26,6 +26,7 @@ paths=['/','/temas/','/experiencias-con-ia/','/politica-editorial/','/colabora/'
 def check(path):
     code,url,body=fetch(base+path);assert code==200,(path,code)
     p=HTML();p.feed(body);assert p.h1==1,(path,'h1',p.h1);assert len(p.canonical)==1,(path,'canonical',p.canonical);assert 'noindex' not in p.meta.get('robots',''),path
+    assert urlsplit(p.canonical[0]).path.rstrip('/')==path.rstrip('/'),(path,p.canonical)
     assert p.ld,(path,'schema missing');return path
 for path in ThreadPoolExecutor(max_workers=4).map(check,paths):print('OK',path)
 code,url,body=fetch(base+'/category/inteligencia-artificial/');assert code==200

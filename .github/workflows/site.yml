@@ -42,6 +42,8 @@ jobs:
           php /tmp/wp core download --path=/tmp/wordpress --version=7.1.5 --locale=en_US --quiet
           php /tmp/wp config create --path=/tmp/wordpress --dbname=wordpress --dbuser=root --dbpass=ephemeral-ci-password --dbhost=127.0.0.1:3306 --quiet
           php /tmp/wp core install --path=/tmp/wordpress --url=http://127.0.0.1:8094 --title=DATOGEDON --admin_user=editor --admin_password=ephemeral-ci-password --admin_email=ci@example.invalid --skip-email --quiet
+          php /tmp/wp option update home http://127.0.0.1:8094 --path=/tmp/wordpress
+          php /tmp/wp option update siteurl http://127.0.0.1:8094 --path=/tmp/wordpress
           cp -R theme/datogedon-reader /tmp/wordpress/wp-content/themes/
           mkdir -p /tmp/wordpress/wp-content/mu-plugins
           cp mu-plugins/datogedon-site.php /tmp/wordpress/wp-content/mu-plugins/
