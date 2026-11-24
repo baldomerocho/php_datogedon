@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Jump to the native form without losing keyboard focus.
+    document.querySelectorAll('.comment-jump').forEach(link => {
+        link.addEventListener('click', e => {
+            const field = document.getElementById('comment');
+            const form = document.getElementById('respond');
+            if (!field || !form) return;
+            e.preventDefault();
+            form.scrollIntoView({block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+            field.focus({preventScroll: true});
+        });
+    });
+
     // === Dark Mode Toggle ===
     const themeToggleBtn = document.getElementById('theme-toggle');
     const htmlElement = document.documentElement;

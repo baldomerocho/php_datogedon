@@ -58,6 +58,8 @@ function datogedon_reader_scripts() {
     // Stylesheet
     wp_enqueue_style( 'datogedon-reader-style', get_stylesheet_uri(), array(), $css_version );
 
+    if (is_singular() && comments_open() && get_option('thread_comments')) wp_enqueue_script('comment-reply');
+
     // JavaScript
     wp_enqueue_script( 'datogedon-reader-js', get_template_directory_uri() . '/js/theme.js', array(), $js_version, true );
     wp_enqueue_script( 'datogedon-analytics', get_template_directory_uri() . '/js/analytics.js', array('datogedon-reader-js'), filemtime(get_template_directory() . '/js/analytics.js'), true );
@@ -376,3 +378,9 @@ function datogedon_reader_exclude_script_from_litespeed( $tag, $handle, $src ) {
     return $tag;
 }
 add_filter( 'script_loader_tag', 'datogedon_reader_exclude_script_from_litespeed', 10, 3 );
+
+/** Keep native comment IDs, permalinks, threading and moderation behavior. */
+function datogedon_reader_comment($comment, $args, $depth) {
+    $GLOBALS['comment']=$comment;
+    require get_template_directory().'/template-parts/comment.php';
+}

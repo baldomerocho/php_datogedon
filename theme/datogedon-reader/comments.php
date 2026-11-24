@@ -1,74 +1,41 @@
 <?php
-/**
- * The template for displaying comments
- */
-
-if ( post_password_required() ) {
-    return;
-}
+/** Native WordPress discussion, rendered as readable threads. */
+if (post_password_required()) return;
+$count=(int)get_comments_number();
+$commenter=wp_get_current_commenter();
+$required=(bool)get_option('require_name_email');
+$attributes=$required?' required aria-required="true"':'';
+$asterisk=$required?' <span aria-hidden="true">*</span>':'';
 ?>
-
-<div id="comments" class="comments-area">
-
-    <?php if ( have_comments() ) : ?>
-        <h2 class="comments-title">
-            <?php
-            $comment_count = get_comments_number();
-            if ( 1 === $comment_count ) {
-                printf(
-                    esc_html__( 'Un comentario en &ldquo;%1$s&rdquo;', 'datogedon-reader' ),
-                    '<span>' . wp_kses_post( get_the_title() ) . '</span>'
-                );
-            } else {
-                printf(
-                    esc_html( _n( '%1$s comentario en &ldquo;%2$s&rdquo;', '%1$s comentarios en &ldquo;%2$s&rdquo;', $comment_count, 'datogedon-reader' ) ),
-                    number_format_i18n( $comment_count ),
-                    '<span>' . wp_kses_post( get_the_title() ) . '</span>'
-                );
-            }
-            ?>
-        </h2>
-
-        <ol class="comment-list">
-            <?php
-            wp_list_comments( array(
-                'style'      => 'ol',
-                'short_ping' => true,
-                'avatar_size'=> 48,
-            ) );
-            ?>
-        </ol>
-
-        <?php
-        the_comments_navigation( array(
-            'prev_text' => __( '&larr; Comentarios anteriores', 'datogedon-reader' ),
-            'next_text' => __( 'Comentarios siguientes &rarr;', 'datogedon-reader' ),
-        ) );
-        ?>
-
-        <?php if ( ! comments_open() ) : ?>
-            <p class="no-comments"><?php esc_html_e( 'Los comentarios están cerrados.', 'datogedon-reader' ); ?></p>
-        <?php endif; ?>
-
+<section id="comments" class="comments-area" aria-labelledby="comments-heading">
+    <header class="comments-heading">
+        <div>
+            <h2 id="comments-heading">Comentarios <span class="comments-count"><?php echo esc_html(number_format_i18n($count)); ?></span></h2>
+            <?php if(comments_open()): ?><p>Comparte tu experiencia o plantea una pregunta.</p><?php endif; ?>
+        </div>
+        <?php if(comments_open()): ?><a class="comment-jump" href="#respond">Escribir un comentario <span aria-hidden="true">↓</span></a><?php endif; ?>
+    </header>
+    <?php if(have_comments()): ?>
+        <ul class="comment-list" role="list">
+            <?php wp_list_comments(array('style'=>'ul','format'=>'html5','short_ping'=>true,'avatar_size'=>40,'callback'=>'datogedon_reader_comment')); ?>
+        </ul>
+        <?php the_comments_navigation(array('prev_text'=>'← Comentarios anteriores','next_text'=>'Comentarios siguientes →')); ?>
+        <?php if(!comments_open()): ?><p class="no-comments">Los comentarios están cerrados.</p><?php endif; ?>
     <?php endif; ?>
-
     <?php
-    $commenter = wp_get_current_commenter();
-    $req = get_option( 'require_name_email' );
-    $aria_req = ( $req ? " aria-required='true'" : '' );
-
-    $fields = array(
-        'author' => '<div class="comment-form-author"><input id="author" name="author" type="text" placeholder="' . esc_attr__( 'Nombre *', 'datogedon-reader' ) . '" value="' . esc_attr( $commenter['comment_author'] ) . '" size="30"' . $aria_req . ' /></div>',
-        'email'  => '<div class="comment-form-email"><input id="email" name="email" type="email" placeholder="' . esc_attr__( 'Correo electrónico *', 'datogedon-reader' ) . '" value="' . esc_attr( $commenter['comment_author_email'] ) . '" size="30"' . $aria_req . ' /></div>',
+    $fields=array(
+        'author'=>'<p class="comment-form-author"><label for="author">Nombre'.$asterisk.'</label><input id="author" name="author" type="text" autocomplete="name" value="'.esc_attr($commenter['comment_author']).'" maxlength="245"'.$attributes.' /></p>',
+        'email'=>'<p class="comment-form-email"><label for="email">Correo electrónico'.$asterisk.'</label><input id="email" name="email" type="email" autocomplete="email" value="'.esc_attr($commenter['comment_author_email']).'" maxlength="100"'.$attributes.' /></p>',
     );
-
-    comment_form( array(
-        'fields'        => $fields,
-        'comment_field' => '<div class="comment-form-comment"><textarea id="comment" name="comment" cols="45" rows="5" placeholder="' . esc_attr__( 'Escribe tu comentario aquí...', 'datogedon-reader' ) . '" aria-required="true"></textarea></div>',
-        'class_submit'  => 'submit',
-        'title_reply'   => __( 'Deja una respuesta', 'datogedon-reader' ),
-        'label_submit'  => __( 'Publicar comentario', 'datogedon-reader' ),
-    ) );
+    comment_form(array(
+        'fields'=>$fields,
+        'comment_field'=>'<p class="comment-form-comment"><label for="comment">Comentario <span aria-hidden="true">*</span></label><textarea id="comment" name="comment" rows="5" required aria-required="true" placeholder="Escribe tu comentario…"></textarea></p>',
+        'comment_notes_before'=>'<p class="comment-notes">Tu correo no se publica.'.($required?' Los campos con * son obligatorios.':'').'</p>',
+        'class_submit'=>'submit comment-submit',
+        'title_reply'=>'Escribe un comentario',
+        'title_reply_to'=>'Responder a %s',
+        'cancel_reply_link'=>'Cancelar respuesta',
+        'label_submit'=>'Enviar comentario',
+    ));
     ?>
-
-</div><!-- #comments -->
+</section>

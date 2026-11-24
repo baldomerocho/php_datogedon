@@ -3,7 +3,7 @@ Theme Name: Datogedon Reader
 Theme URI: https://datogedon.com
 Author: Datogedon & Antigravity
 Description: A premium, ultra-fast, minimalist WordPress theme optimized for SEO and readability. Native dark mode, single column layout, zero dependencies, and complete compatibility with caching and SEO plugins.
-Version: 1.2.0
+Version: 1.3.0
 Text Domain: datogedon-reader
 */
 
@@ -865,81 +865,70 @@ pre code,
     color: var(--accent);
 }
 
-/* --- Comments Section --- */
-.comments-area {
-    margin-top: 4rem;
-    border-top: 1px solid var(--border);
-    padding-top: 3rem;
-}
-
-.comment-list {
-    list-style: none;
-    margin-bottom: 3rem;
-}
-
-.comment-body {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    background-color: var(--bg-card);
-}
-
-.comment-meta {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    margin-bottom: 0.75rem;
-    display: flex;
-    justify-content: space-between;
-}
-
-.comment-author cite {
-    font-weight: 600;
-    font-style: normal;
-    color: var(--text-headings);
-}
-
-.comment-content {
-    font-size: 0.9375rem;
-}
-
-.comment-respond {
-    margin-top: 2rem;
-}
-
-.comment-form input[type="text"], 
-.comment-form input[type="email"], 
-.comment-form textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    background-color: var(--bg-card);
-    color: var(--text);
-    border-radius: 6px;
-    margin-bottom: 1rem;
-    font-family: var(--font-sans);
-}
-
-.comment-form input[type="text"]:focus, 
-.comment-form input[type="email"]:focus, 
-.comment-form textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-}
-
-.comment-form .submit {
-    background-color: var(--accent);
-    color: #ffffff;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.comment-form .submit:hover {
-    background-color: var(--accent-hover);
+/* --- Discussion: native threads, readable at any depth --- */
+.comments-area { margin-top:3rem;border-top:1px solid var(--border);padding-top:2rem;font-family:var(--font-sans);min-width:0; }
+.comments-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:2rem; }
+.comments-heading h2 { display:flex;align-items:center;gap:.65rem;font-size:1.5rem;line-height:1.3;margin:0 0 .5rem; }
+.comments-heading p { margin:0;color:var(--text-muted);font-size:.9rem; }
+.comments-count { display:inline-flex;align-items:center;justify-content:center;min-width:2rem;min-height:2rem;padding:.2rem .6rem;border-radius:999px;background:var(--bg-code);font-size:.85rem;font-weight:600; }
+.comment-jump { display:inline-flex;align-items:center;gap:.6rem;flex-shrink:0;min-height:44px;border:1px solid var(--border);padding:.55rem .85rem;border-radius:8px;font-size:.85rem;font-weight:600; }
+.comments-area .comment-list,.comments-area .comment-list .children { list-style:none;margin:0;padding:0; }
+.comments-area .comment-list>.comment,.comments-area .children>.comment { list-style:none; }
+.comments-area .comment-list .children { margin-inline-start:1.25rem;padding-inline-start:1.25rem;border-inline-start:2px solid var(--border); }
+.comments-area .children .children { margin-inline-start:.5rem;padding-inline-start:1rem; }
+.comments-area .children .children .children { margin-inline-start:0;padding-inline-start:0;border:0; }
+.comment-body { border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin:0 0 1rem;background:var(--bg-card);min-width:0;scroll-margin-top:110px; }
+.comment:target>.comment-body { outline:2px solid var(--accent);outline-offset:3px; }
+.comment-meta { display:block;margin:0 0 1rem;font-size:.875rem;color:var(--text-muted); }
+.comment-person { display:flex;align-items:center;gap:.75rem;min-width:0; }
+.comment-person .avatar { width:40px;height:40px;flex:0 0 40px;border-radius:50%;object-fit:cover;margin:0; }
+.comment-person-details { min-width:0; }
+.comment-author { display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;line-height:1.4; }
+.comment-author .fn,.comment-author .fn a { font-style:normal;font-weight:650;color:var(--text-headings);overflow-wrap:anywhere; }
+.comment-author-badge { color:var(--text-headings);background:var(--bg-code);border:1px solid var(--border);border-radius:5px;padding:.1rem .4rem;font-size:.65rem;font-weight:600; }
+.comment-permalink { display:inline-block;color:var(--text-muted);font-size:.75rem;line-height:1.6;margin-top:.2rem; }
+.comment-permalink:hover,.comment-parent-reference a:hover { text-decoration:underline; }
+.comment-parent-reference { font-size:.78rem;color:var(--text-muted);margin:0 0 .9rem;overflow-wrap:anywhere; }
+.comment-parent-reference a { color:var(--text-headings);font-weight:600; }
+.comment-content { font-size:.9375rem;line-height:1.75;overflow-wrap:anywhere;min-width:0; }
+.comment-content p { margin:0 0 .9rem; }
+.comment-content>:last-child { margin-bottom:0; }
+.comment-content a { text-decoration:underline;text-underline-offset:3px; }
+.comment-content pre { white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;padding:.75rem;background:var(--bg-code);border-radius:6px; }
+.comment-content code { overflow-wrap:anywhere; }
+.comment-content ul,.comment-content ol { padding-inline-start:1.5rem;margin:.75rem 0; }
+.comment-actions { display:flex;flex-wrap:wrap;gap:1rem;margin-top:.8rem; }
+.comment-actions:empty { display:none; }
+.comment-actions a { display:inline-flex;align-items:center;min-height:44px;font-size:.8rem;font-weight:600;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:4px; }
+.comment-actions a:hover { text-decoration-color:currentColor; }
+.comment-awaiting-moderation { border-inline-start:3px solid var(--accent);padding:.5rem .75rem;background:var(--bg-code);font-size:.85rem; }
+.comment-respond { margin:2rem 0 0;padding:1.5rem;border:1px solid var(--border);border-radius:12px;background:var(--bg-card);scroll-margin-top:100px; }
+.comment-list .comment-respond { margin:0 0 1.5rem; }
+.comment-reply-title { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;font-size:1.15rem;line-height:1.5;margin:0 0 .5rem; }
+.comment-reply-title small { font-size:.75rem;font-weight:500; }
+#cancel-comment-reply-link { display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px; }
+.comment-notes,.logged-in-as { font-size:.8rem;line-height:1.7;color:var(--text-muted);margin-bottom:1.25rem; }
+.comment-form { display:grid;grid-template-columns:1fr 1fr;column-gap:1rem;row-gap:.9rem; }
+.comment-form>p { margin:0;min-width:0; }
+.comment-form>* { grid-column:1/-1; }
+.comment-form .comment-form-author { grid-column:1; }
+.comment-form .comment-form-email { grid-column:2; }
+.comment-form label { display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem;color:var(--text-headings); }
+.comment-form input[type="text"],.comment-form input[type="email"],.comment-form textarea { width:100%;max-width:100%;padding:.8rem;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;font:inherit;font-size:1rem;line-height:1.5; }
+.comment-form textarea { resize:vertical;min-height:140px; }
+.comment-form :is(input,textarea):focus-visible { outline:2px solid var(--accent);outline-offset:3px; }
+.comment-form .submit { background:var(--accent);color:var(--bg);border:1px solid var(--accent);min-height:44px;padding:.7rem 1rem;border-radius:8px;font:inherit;font-size:.875rem;font-weight:600;cursor:pointer; }
+.comment-form .submit:hover { opacity:.85; }
+@media(max-width:600px) {
+ .comments-heading { flex-direction:column;gap:1rem; }
+ .comments-heading h2 { font-size:1.35rem; }
+ .comments-area .comment-list .children { margin-inline-start:.4rem;padding-inline-start:.75rem; }
+ .comments-area .children .children { margin-inline-start:0;padding-inline-start:0;border:0; }
+ .comment-body { padding:1rem; }
+ .comment-respond { padding:1rem; }
+ .comment-form { grid-template-columns:1fr; }
+ .comment-form .comment-form-author,.comment-form .comment-form-email { grid-column:1/-1; }
+ .comment-form .submit { width:100%; }
 }
 
 /* --- Utilities --- */
