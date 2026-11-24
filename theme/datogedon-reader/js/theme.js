@@ -99,36 +99,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('reading-progress');
     
     if (progressBar) {
-        // Only run progress bar logic if we are on a single page that has scrollable content
+        let progressFrame = null;
         const updateProgressBar = () => {
-            const scrollTop = window.scrollY || document.documentElement.scrollTop;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            
-            if (docHeight > 0) {
-                const scrollPercent = (scrollTop / docHeight) * 100;
-                progressBar.style.width = scrollPercent + '%';
+            progressFrame = null;
+            const body = document.querySelector('body.single-post article .post-content');
+            let percent;
+            if (body) {
+                const rect = body.getBoundingClientRect();
+                percent = rect.height > 0 ? (window.innerHeight - rect.top) / rect.height * 100 : 0;
+            } else {
+                const height = document.documentElement.scrollHeight - window.innerHeight;
+                percent = height > 0 ? window.scrollY / height * 100 : 0;
             }
+            progressBar.style.width = Math.max(0, Math.min(100, percent)) + '%';
         };
-
-        window.addEventListener('scroll', updateProgressBar);
-        window.addEventListener('resize', updateProgressBar);
-        updateProgressBar(); // Initial call
+        const scheduleProgress = () => { if (progressFrame === null) progressFrame = requestAnimationFrame(updateProgressBar); };
+        window.addEventListener('scroll', scheduleProgress, {passive: true});
+        window.addEventListener('resize', scheduleProgress);
+        updateProgressBar();
     }
 
     // === Search Autocomplete ===
     const searchForms = document.querySelectorAll('.search-form');
-    searchForms.forEach(form => {
+    searchForms.forEach((form, formIndex) => {
         const input = form.querySelector('.search-field');
         if (!input) return;
 
         // Create results container
         const resultsContainer = document.createElement('div');
         resultsContainer.className = 'search-autocomplete-results';
+        resultsContainer.id = `search-suggestions-${formIndex}`;
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-controls', resultsContainer.id);
+        input.setAttribute('aria-expanded', 'false');
         resultsContainer.setAttribute('role', 'listbox');
         resultsContainer.setAttribute('aria-label', 'Sugerencias de búsqueda');
         form.appendChild(resultsContainer);
 
         let debounceTimeout = null;
+        let controller = null;
+        let generation = 0;
         let selectedIndex = -1;
         let items = [];
 
@@ -144,9 +155,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             selectedIndex = newIndex;
+            if (items[newIndex]) input.setAttribute('aria-activedescendant', items[newIndex].id);
+            else input.removeAttribute('aria-activedescendant');
         };
 
         const closeDropdown = () => {
+            clearTimeout(debounceTimeout);
+            if (controller) controller.abort();
+            generation++;
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
             resultsContainer.classList.remove('active');
             resultsContainer.innerHTML = '';
             selectedIndex = -1;
@@ -154,6 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         const fetchResults = (query) => {
+            if (controller) controller.abort();
+            const requestGeneration = ++generation;
             if (query.trim().length < 2) {
                 closeDropdown();
                 return;
@@ -161,15 +181,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             resultsContainer.innerHTML = '<div class="autocomplete-loading" role="status" aria-live="polite">Buscando...</div>';
             resultsContainer.classList.add('active');
+            input.setAttribute('aria-expanded', 'true');
 
             const apiUrl = `/wp-json/datogedon-reader/v1/search?q=${encodeURIComponent(query)}`;
 
-            fetch(apiUrl)
+            controller = new AbortController();
+            fetch(apiUrl, {signal: controller.signal})
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
                 })
                 .then(data => {
+                    if (requestGeneration !== generation || input.value !== query) return;
+                    input.removeAttribute('aria-activedescendant');
                     resultsContainer.innerHTML = '';
                     if (data.length === 0) {
                         resultsContainer.innerHTML = `<div class="autocomplete-no-results">No se encontraron resultados para "${escapeHTML(query)}"</div>`;
@@ -181,9 +205,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.forEach((post, index) => {
                         const itemLink = document.createElement('a');
                         itemLink.href = post.permalink;
+                        itemLink.dataset.postId = String(post.id);
                         itemLink.className = 'autocomplete-item';
                         itemLink.setAttribute('role', 'option');
-                        itemLink.setAttribute('id', `autocomplete-option-${index}`);
+                        itemLink.setAttribute('id', `autocomplete-option-${formIndex}-${index}`);
                         itemLink.setAttribute('aria-selected', 'false');
 
                         // Thumbnail
@@ -218,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedIndex = -1;
                 })
                 .catch(error => {
+                    if (error.name === 'AbortError' || requestGeneration !== generation) return;
                     console.error('Error fetching search autocomplete results:', error);
                     resultsContainer.innerHTML = '<div class="autocomplete-no-results">Error al buscar. Intente de nuevo.</div>';
                 });
@@ -225,12 +251,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Event listener for inputs with debounce
         input.addEventListener('input', function() {
-            clearTimeout(debounceTimeout);
+            closeDropdown();
             const query = this.value;
             debounceTimeout = setTimeout(() => {
                 fetchResults(query);
             }, 200);
         });
+
+        form.addEventListener('submit', closeDropdown);
 
         // Focus event
         input.addEventListener('focus', function() {

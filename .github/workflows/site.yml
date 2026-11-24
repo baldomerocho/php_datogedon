@@ -64,6 +64,7 @@ jobs:
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
           SITE_URL=http://127.0.0.1:8094 node tests/browser.cjs
+          SITE_URL=http://127.0.0.1:8094 node tests/analytics.cjs
       - name: Package immutable source release
         if: github.event_name != 'pull_request'
         run: |

@@ -88,3 +88,10 @@ no tiene permiso de publicación; un editor gestiona la revisión y los medios.
 GPL-2.0-or-later para el código propio. El tema parte del tema personalizado
 Datogedon Reader existente; se mantienen sus créditos. WordPress y los plugins
 de terceros conservan sus respectivas licencias y no se incluyen aquí.
+
+## Analítica
+
+La integración amplía el Matomo existente con navegación, búsquedas, progreso de
+lectura y colaboración. Consulta [el catálogo de eventos y su validación](docs/analytics.md).
+La API de informes se consulta con `scripts/matomo-audit.py`, usando un archivo
+privado local; ningún token forma parte del sitio ni del repositorio.

@@ -60,6 +60,7 @@ function datogedon_reader_scripts() {
 
     // JavaScript
     wp_enqueue_script( 'datogedon-reader-js', get_template_directory_uri() . '/js/theme.js', array(), $js_version, true );
+    wp_enqueue_script( 'datogedon-analytics', get_template_directory_uri() . '/js/analytics.js', array('datogedon-reader-js'), filemtime(get_template_directory() . '/js/analytics.js'), true );
 }
 add_action( 'wp_enqueue_scripts', 'datogedon_reader_scripts' );
 
@@ -204,7 +205,7 @@ function datogedon_reader_related_posts() {
     $related=new WP_Query($args);
     if($related->have_posts()) {
         echo '<aside class="related-posts" aria-label="Artículos relacionados"><h2>Seguir leyendo</h2><ul>';
-        while($related->have_posts()) {$related->the_post();echo '<li><a href="'.esc_url(get_permalink()).'">'.esc_html(get_the_title()).'</a></li>';}
+        while($related->have_posts()) {$related->the_post();echo '<li data-post-id="'.(int)get_the_ID().'"><a href="'.esc_url(get_permalink()).'">'.esc_html(get_the_title()).'</a></li>';}
         echo '</ul></aside>';wp_reset_postdata();
     }
 }
@@ -369,25 +370,9 @@ add_filter( 'style_loader_tag', 'datogedon_reader_exclude_style_from_litespeed',
  * Exclude main theme script from LiteSpeed Cache optimization (minify/combine/defer)
  */
 function datogedon_reader_exclude_script_from_litespeed( $tag, $handle, $src ) {
-    if ( 'datogedon-reader-js' === $handle ) {
+    if ( in_array($handle, array('datogedon-reader-js','datogedon-analytics'), true) ) {
         $tag = str_replace( '<script ', '<script data-no-optimize="1" ', $tag );
     }
     return $tag;
 }
 add_filter( 'script_loader_tag', 'datogedon_reader_exclude_script_from_litespeed', 10, 3 );
-
-/**
- * Force a one-time purge of LiteSpeed Cache to apply the data-no-optimize rule.
- */
-function datogedon_reader_one_time_purge() {
-    if ( ! get_option( 'datogedon_reader_purged_litespeed_v12' ) ) {
-        do_action( 'litespeed_purge_all' );
-        update_option( 'datogedon_reader_purged_litespeed_v12', 1 );
-    }
-}
-add_action( 'init', 'datogedon_reader_one_time_purge' );
-
-
-
-
-

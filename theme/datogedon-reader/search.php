@@ -7,7 +7,7 @@ get_header();
 ?>
 
 <main id="primary" class="site-main container">
-    <header class="page-header search-header" style="margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
+    <header data-search-results="<?php global $wp_query; echo (int)$wp_query->found_posts; ?>" class="page-header search-header" style="margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
         <?php datogedon_reader_breadcrumbs(); ?>
         
         <h1 class="page-title search-title" style="font-size: 2rem; font-weight: 700; margin-top: 1rem; margin-bottom: 1.5rem; color: var(--text-headings);">
@@ -32,31 +32,7 @@ get_header();
             while ( have_posts() ) :
                 the_post();
                 ?>
-                <!-- Standard Post Cards -->
-                <article id="post-<?php the_ID(); ?>" <?php post_class( 'post-card' ); ?>>
-                    <div class="post-meta">
-                        <span class="post-date"><?php echo get_the_date(); ?></span>
-                        <span class="meta-separator">&bull;</span>
-                        <span class="post-category"><?php the_category( ', ' ); ?></span>
-                        <span class="meta-separator">&bull;</span>
-                        <span class="post-read-time">
-                            <?php 
-                            $reading_time = datogedon_reader_reading_time( get_the_content() );
-                            printf( __( '%d min de lectura', 'datogedon-reader' ), $reading_time );
-                            ?>
-                        </span>
-                    </div>
-
-                    <h2 class="post-card-title">
-                        <a href="<?php the_permalink(); ?>" rel="bookmark"><?php the_title(); ?></a>
-                    </h2>
-
-                    <div class="post-excerpt">
-                        <?php the_excerpt(); ?>
-                    </div>
-
-                    <a href="<?php the_permalink(); ?>" class="read-more-link"><?php _e( 'Leer artículo completo &rarr;', 'datogedon-reader' ); ?></a>
-                </article>
+                <?php set_query_var('datogedon_featured',false); get_template_part('template-parts/card'); ?>
             <?php
             endwhile;
             ?>

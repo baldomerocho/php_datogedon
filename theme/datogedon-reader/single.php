@@ -9,7 +9,7 @@ get_header();
 <main id="primary" class="site-main content-container">
     <div class="single-layout">
         <?php while ( have_posts() ) : the_post(); ?>
-            <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+            <article data-post-id="<?php echo (int)get_the_ID(); ?>" id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
                 <header class="single-header">
                     <?php datogedon_reader_breadcrumbs(); ?>
                     <div class="post-meta">
