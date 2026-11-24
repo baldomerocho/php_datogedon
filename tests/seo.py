@@ -52,7 +52,7 @@ code,url,body=fetch(base+'/inteligencia-artificial/');assert code==200 and urlsp
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None
 try:
-    urllib.request.build_opener(NoRedirect).open(base+'/inteligencia-artificial/page/2/',timeout=30)
+    urllib.request.build_opener(NoRedirect).open(urllib.request.Request(base+'/inteligencia-artificial/page/2/',headers={'User-Agent':'DatogedonStructure/1.0'}),timeout=30)
     raise AssertionError('Legacy category pagination must redirect')
 except urllib.error.HTTPError as redirect:
     assert redirect.code==301 and urlsplit(redirect.headers['Location']).path=='/category/inteligencia-artificial/page/2/',(redirect.code,dict(redirect.headers))
