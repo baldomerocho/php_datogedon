@@ -39,6 +39,11 @@ add_filter('rank_math/frontend/canonical', function ($url) {
     return is_category() && !is_paged() ? datogedon_category_url(get_queried_object()) : $url;
 });
 
+// This plugin echoes sitemap directives after core has filtered robots.txt.
+// Keep the XML generator; let our single robots filter own its declaration.
+add_action('init', function () {
+    remove_action('do_robots', array('GoogleSitemapGeneratorLoader', 'call_do_robots'), 100);
+}, 100);
 add_filter('robots_txt', function ($text, $public) {
     if (!$public) return $text;
     $text = preg_replace('/^\s*Sitemap:[^\r\n]*(?:\r?\n|$)/mi', '', $text);
