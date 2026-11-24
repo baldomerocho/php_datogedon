@@ -36,6 +36,8 @@ jobs:
         run: |
           find theme mu-plugins plugins tests scripts -name '*.php' -print0 | xargs -0 -n1 php -l
           python3 scripts/check-public-source.py
+          python3 tests/editorial.py
+          systemd-analyze verify ops/datogedon-wp-cron.service ops/datogedon-wp-cron.timer
       - name: Boot isolated WordPress
         run: |
           curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /tmp/wp
@@ -69,7 +71,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           printf '%s' "$GITHUB_SHA" > RELEASE_SHA
-          tar -czf release.tar.gz theme mu-plugins plugins scripts RELEASE_SHA
+          tar -czf release.tar.gz theme mu-plugins plugins scripts ops RELEASE_SHA
           sha256sum release.tar.gz > release.tar.gz.sha256
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'

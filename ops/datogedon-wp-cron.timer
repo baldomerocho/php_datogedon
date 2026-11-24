@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Datogedon WordPress scheduled tasks every five minutes
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+AccuracySec=10s
+Unit=datogedon-wp-cron.service
+
+[Install]
+WantedBy=timers.target

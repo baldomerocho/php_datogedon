@@ -95,3 +95,10 @@ La integración amplía el Matomo existente con navegación, búsquedas, progres
 lectura y colaboración. Consulta [el catálogo de eventos y su validación](docs/analytics.md).
 La API de informes se consulta con `scripts/matomo-audit.py`, usando un archivo
 privado local; ningún token forma parte del sitio ni del repositorio.
+
+## Publicación diaria
+
+El ejecutor local, la conciliación de cola y los avisos están en `editorial/`.
+El servidor ejecuta WP-Cron mediante un timer propio. Consulta
+[operación y recuperación editorial](docs/editorial-automation.md). La evidencia
+privada y las conversaciones quedan fuera de este repositorio.

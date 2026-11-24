@@ -1,0 +1,17 @@
+[Unit]
+Description=Run native WordPress scheduled tasks for Datogedon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=runcloud
+Group=runcloud
+WorkingDirectory=/home/runcloud/webapps/app-fdev
+ExecStart=/usr/bin/php /home/runcloud/webapps/app-fdev/wp-cron.php
+TimeoutStartSec=240
+NoNewPrivileges=true
+PrivateTmp=true
+Nice=10
+CPUAccounting=true
+MemoryAccounting=true

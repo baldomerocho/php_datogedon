@@ -17,3 +17,10 @@ test-results/
 *.zip
 __pycache__/
 *.pyc
+private/
+queue.json
+editorial-config.json
+daily-status.json
+editorial-health.json
+run-history.jsonl
+*-evidence.json
