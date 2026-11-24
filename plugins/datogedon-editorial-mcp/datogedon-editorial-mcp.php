@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Datogedon Editorial MCP
  * Description: Capacidades MCP para borradores, programación y miniaturas del diario de desarrollo.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires at least: 6.9
  * Requires PHP: 7.4
  * Requires Plugins: mcp-adapter
@@ -37,6 +37,9 @@ add_action('wp_abilities_api_init', function () {
             $id = $existing ? $existing[0] : 0;
             if ($id && (!current_user_can('edit_post', $id) || get_post_status($id) === 'publish')) return new WP_Error('locked_post', 'Entrada publicada o sin permiso de edición.');
             $post = ['post_type' => 'post', 'post_title' => sanitize_text_field($p['title']), 'post_content' => wp_kses_post($p['content']), 'post_status' => $p['status']];
+            // Partial wp_insert_post updates default omitted comment_status to closed.
+            // Preserve the post's explicit policy; apply the site default only on creation.
+            $post['comment_status'] = $id ? get_post_field('comment_status', $id) : get_default_comment_status('post');
             if ($id) $post['ID'] = $id;
             if (isset($p['excerpt'])) $post['post_excerpt'] = sanitize_textarea_field($p['excerpt']);
             if (isset($p['slug'])) $post['post_name'] = sanitize_title($p['slug']);

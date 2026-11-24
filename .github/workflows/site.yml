@@ -49,9 +49,11 @@ jobs:
           cp -R theme/datogedon-reader /tmp/wordpress/wp-content/themes/
           mkdir -p /tmp/wordpress/wp-content/mu-plugins
           cp mu-plugins/datogedon-site.php /tmp/wordpress/wp-content/mu-plugins/
+          cp plugins/datogedon-editorial-mcp/datogedon-editorial-mcp.php /tmp/wordpress/wp-content/mu-plugins/editorial-test.php
           php /tmp/wp plugin install seo-by-rank-math google-sitemap-generator --activate --path=/tmp/wordpress --quiet
           php /tmp/wp theme activate datogedon-reader --path=/tmp/wordpress --quiet
           php /tmp/wp eval-file "$PWD/tests/seed.php" --path=/tmp/wordpress
+          php /tmp/wp eval-file "$PWD/tests/comments.php" --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/scripts/route-inventory.php" --path=/tmp/wordpress > /tmp/routes-before.json
           php /tmp/wp datogedon configure --owner=1 --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/scripts/route-inventory.php" --path=/tmp/wordpress > /tmp/routes-after.json
