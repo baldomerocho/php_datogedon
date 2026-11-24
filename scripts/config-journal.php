@@ -1,7 +1,7 @@
 <?php
 /** Private journal; execute through WP-CLI, never serve over HTTP. */
 $mode=$args[0];$file=$args[1];$owner=(int)$args[2];
-$keys=array('rank-math-options-titles','rank-math-options-general','datogedon_owner_user_id','datogedon_category_redirects','blogdescription');
+$keys=array('rank_math_registration_skip','rank-math-options-titles','rank-math-options-general','datogedon_owner_user_id','datogedon_category_redirects','blogdescription');
 $slugs=array('acerca-de','experiencias-con-ia','temas','politica-editorial','colabora');
 if($mode==='save') {
     $data=array('options'=>array(),'pages'=>array(),'owner'=>array(),'stylesheet'=>get_option('stylesheet'));

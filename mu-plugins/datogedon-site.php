@@ -152,6 +152,8 @@ if (defined('WP_CLI') && WP_CLI) {
         $owner = get_user_by('id', $owner_id);
         if (!$owner) WP_CLI::error('Indica un autor existente mediante --owner=ID.');
         update_option('datogedon_owner_user_id', $owner_id);
+        // Native free-mode option: no account or API key is required.
+        update_option('rank_math_registration_skip', true);
         $titles = get_option('rank-math-options-titles', array());
         $titles['knowledgegraph_name'] = $owner->display_name;
         $titles['website_name'] = get_bloginfo('name');
