@@ -1,0 +1,17 @@
+.env*
+!.env.example
+wp-config.php
+*.sql
+*.sql.gz
+*.pem
+*.key
+node_modules/
+vendor/
+.local/
+artifacts/
+playwright-report/
+test-results/
+.DS_Store
+._*
+*.tar.gz
+*.zip

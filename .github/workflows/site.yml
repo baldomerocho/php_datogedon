@@ -1,0 +1,95 @@
+name: Validate and deploy Datogedon
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      exercise_rollback:
+        description: Verify recovery after an intentional failed deployment
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: datogedon-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ephemeral-ci-password
+          MYSQL_DATABASE: wordpress
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -pephemeral-ci-password" --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mysqli, gd, mbstring
+          ini-values: memory_limit=512M
+      - name: Validate PHP and public source boundaries
+        run: |
+          find theme mu-plugins plugins tests scripts -name '*.php' -print0 | xargs -0 -n1 php -l
+          python3 scripts/check-public-source.py
+      - name: Boot isolated WordPress
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /tmp/wp
+          php /tmp/wp core download --path=/tmp/wordpress --version=7.1.5 --locale=en_US --quiet
+          php /tmp/wp config create --path=/tmp/wordpress --dbname=wordpress --dbuser=root --dbpass=ephemeral-ci-password --dbhost=127.0.0.1:3306 --quiet
+          php /tmp/wp core install --path=/tmp/wordpress --url=http://127.0.0.1:8094 --title=DATOGEDON --admin_user=editor --admin_password=ephemeral-ci-password --admin_email=ci@example.invalid --skip-email --quiet
+          cp -R theme/datogedon-reader /tmp/wordpress/wp-content/themes/
+          mkdir -p /tmp/wordpress/wp-content/mu-plugins
+          cp mu-plugins/datogedon-site.php /tmp/wordpress/wp-content/mu-plugins/
+          php /tmp/wp plugin install seo-by-rank-math google-sitemap-generator --activate --path=/tmp/wordpress --quiet
+          php /tmp/wp theme activate datogedon-reader --path=/tmp/wordpress --quiet
+          php /tmp/wp eval-file "$PWD/tests/seed.php" --path=/tmp/wordpress
+          php /tmp/wp eval-file "$PWD/scripts/route-inventory.php" --path=/tmp/wordpress > /tmp/routes-before.json
+          php /tmp/wp datogedon configure --owner=1 --path=/tmp/wordpress
+          php /tmp/wp eval-file "$PWD/scripts/route-inventory.php" --path=/tmp/wordpress > /tmp/routes-after.json
+          python3 scripts/compare-routes.py /tmp/routes-before.json /tmp/routes-after.json
+          php /tmp/wp server --path=/tmp/wordpress --host=127.0.0.1 --port=8094 > /tmp/site.log 2>&1 &
+          for attempt in $(seq 1 20); do if curl -fsS http://127.0.0.1:8094/ > /dev/null; then break; fi; sleep 1; done
+          python3 tests/seo.py http://127.0.0.1:8094 /tmp/routes-after.json
+      - name: Browser checks
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          SITE_URL=http://127.0.0.1:8094 node tests/browser.cjs
+      - name: Package immutable source release
+        if: github.event_name != 'pull_request'
+        run: |
+          printf '%s' "$GITHUB_SHA" > RELEASE_SHA
+          tar -czf release.tar.gz theme mu-plugins plugins scripts RELEASE_SHA
+          sha256sum release.tar.gz > release.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: datogedon-${{ github.sha }}
+          path: |
+            release.tar.gz
+            release.tar.gz.sha256
+          retention-days: 30
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && !contains(github.event.head_commit.message, '[skip deploy]')
+    needs: validate
+    runs-on: [self-hosted, datogedon-deploy]
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: datogedon-${{ github.sha }}
+          path: artifact
+      - name: Verify and deploy approved artifact
+        run: |
+          cd artifact
+          sha256sum -c release.tar.gz.sha256
+          if [ "${{ inputs.exercise_rollback }}" = "true" ]; then
+            sudo -n /usr/local/sbin/datogedon-deploy "$GITHUB_SHA" "$PWD/release.tar.gz" --exercise-rollback
+          else
+            sudo -n /usr/local/sbin/datogedon-deploy "$GITHUB_SHA" "$PWD/release.tar.gz"
+          fi

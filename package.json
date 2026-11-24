@@ -1,0 +1,1 @@
+{"name":"php_datogedon","version":"1.1.0","private":true,"license":"GPL-2.0-or-later","devDependencies":{"playwright":"1.58.2"},"scripts":{"test:browser":"node tests/browser.cjs"}}

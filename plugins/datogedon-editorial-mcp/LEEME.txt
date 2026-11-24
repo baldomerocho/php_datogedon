@@ -1,0 +1,26 @@
+Datogedon Editorial MCP 0.1.0
+
+Instalar desde Plugins > Añadir plugin > Subir plugin, y activar.
+Requiere WordPress 6.9 o posterior y MCP Adapter activo.
+Reiniciar la conexión MCP de Codex para actualizar sus capacidades.
+
+Capacidades añadidas:
+- datogedon/save-post: borradores y programación, taxonomías existentes,
+  imagen destacada y metadatos SEO de Rank Math.
+- datogedon/upload-thumbnail: JPEG, PNG y WebP hasta 2 MB, título y alt.
+
+Cada operación exige los permisos del usuario autenticado. La exposición por
+MCP no permite saltarse autenticación ni permisos. No almacena credenciales.
+No modifica entradas ya publicadas y no permite publicación inmediata.
+Fechas de programación: zona horaria configurada en WordPress.
+
+El editorial_id sirve para reintentos secuenciales. Ejecutar un solo proceso
+editorial a la vez; no es un bloqueo distribuido contra escrituras concurrentes.
+Reutilizar otra editorial_id para variantes nuevas de una miniatura.
+
+El plugin no genera texto, imágenes ni ejecuta el monitoreo diario. Esas tareas
+corresponden al recolector/editor externo. Publicar a tiempo depende del cron
+del hosting de WordPress.
+
+Validación previa: sintaxis PHP. Falta probar las capacidades activadas en el
+WordPress real, empezando con un borrador y una imagen antes de programar.

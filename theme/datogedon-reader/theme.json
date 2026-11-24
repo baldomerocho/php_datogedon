@@ -1,0 +1,77 @@
+{
+    "version": 2,
+    "settings": {
+        "color": {
+            "custom": false,
+            "customGradient": false,
+            "gradients": [],
+            "palette": [
+                {
+                    "name": "Negro",
+                    "slug": "black",
+                    "color": "#111827"
+                },
+                {
+                    "name": "Crema",
+                    "slug": "cream",
+                    "color": "#fcfbf9"
+                },
+                {
+                    "name": "Blanco",
+                    "slug": "white",
+                    "color": "#ffffff"
+                },
+                {
+                    "name": "Gris Oscuro",
+                    "slug": "dark-gray",
+                    "color": "#121212"
+                },
+                {
+                    "name": "Gris Claro",
+                    "slug": "light-gray",
+                    "color": "#f3f4f6"
+                },
+                {
+                    "name": "Gris Mutado",
+                    "slug": "muted-gray",
+                    "color": "#6b7280"
+                }
+            ]
+        },
+        "typography": {
+            "customFontStyle": false,
+            "customFontWeight": false,
+            "fontSizes": [
+                {
+                    "name": "Pequeña",
+                    "slug": "small",
+                    "size": "0.875rem"
+                },
+                {
+                    "name": "Normal",
+                    "slug": "normal",
+                    "size": "1.0625rem"
+                },
+                {
+                    "name": "Mediana",
+                    "slug": "medium",
+                    "size": "1.25rem"
+                },
+                {
+                    "name": "Grande",
+                    "slug": "large",
+                    "size": "1.75rem"
+                },
+                {
+                    "name": "Muy Grande",
+                    "slug": "huge",
+                    "size": "2.25rem"
+                }
+            ]
+        },
+        "layout": {
+            "contentSize": "720px",
+            "wideSize": "900px"
+        }
+    }
+}
