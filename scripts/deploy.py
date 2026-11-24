@@ -70,8 +70,9 @@ for p in theme_dest.rglob('*'):os.chown(p,account.pw_uid,account.pw_gid)
 def write_mu(content):
     tmp=mu.with_suffix('.php.next');tmp.write_bytes(content);os.chown(tmp,account.pw_uid,account.pw_gid);os.replace(tmp,mu)
 def purge():
-    wp('cache','flush')
-    wp('eval',"if(function_exists('do_action'))do_action('litespeed_purge_all');")
+    # Global object-cache flush can clear a shared Redis database or Memcached.
+    # WordPress invalidates modified objects; purge only this site's HTML pages.
+    wp('eval',"if(class_exists('\\LiteSpeed\\Purge') && method_exists('\\LiteSpeed\\Purge','purge_all_lscache')) \\LiteSpeed\\Purge::purge_all_lscache('Datogedon deploy');")
 started=time.time();result={'sha':sha,'previous_theme':previous,'artifact_sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'started_at':started}
 try:
     write_mu((release/'mu-plugins/datogedon-site.php').read_bytes())
