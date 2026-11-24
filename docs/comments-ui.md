@@ -4,9 +4,10 @@ La conversación usa el walker nativo de WordPress con listas sin numeración.
 Cada respuesta identifica a su comentario padre y conserva los anclajes
 `comment-ID` y `div-comment-ID`, el orden, la paginación y la moderación.
 
-Las tarjetas agrupan avatar, nombre y fecha; las respuestas tienen una guía
-vertical. La sangría se limita en niveles profundos para conservar el ancho
-útil del texto en móvil. Los listados numerados escritos dentro de un comentario
+Las tarjetas agrupan avatar, nombre y fecha. Cada respuesta tiene un conector
+que termina junto al avatar, identifica al comentario padre por su nombre y muestra
+su nivel explícito (la primera respuesta es nivel 1). Cada nivel conserva su
+sangría: 32 px en escritorio y 16 px en móvil, sin aplanar niveles profundos. Los listados numerados escritos dentro de un comentario
 conservan su formato: solo se elimina la numeración del árbol de conversación.
 Los enlaces y palabras largos se ajustan a la tarjeta.
 

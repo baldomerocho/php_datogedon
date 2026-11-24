@@ -15,7 +15,7 @@ $is_owner=$comment->user_id && (int)$comment->user_id===(int)get_option('datoged
                 </div>
             </div>
         </header>
-        <?php if($parent): ?><p class="comment-parent-reference">En respuesta a <?php if((string)$parent->comment_approved==='1'): ?><a href="#comment-<?php echo (int)$parent->comment_ID; ?>"><?php echo esc_html(get_comment_author($parent)); ?></a><?php else: ?>otro comentario<?php endif; ?></p><?php endif; ?>
+        <?php if($parent): ?><p class="comment-parent-reference"><span class="comment-level">Respuesta · nivel <?php echo (int)max(1,$depth-1); ?></span><span>A <?php if((string)$parent->comment_approved==='1'): ?><a href="#comment-<?php echo (int)$parent->comment_ID; ?>"><?php echo esc_html(get_comment_author($parent)); ?></a><?php else: ?>otro comentario<?php endif; ?></span></p><?php endif; ?>
         <?php if((string)$comment->comment_approved==='0'): ?><p class="comment-awaiting-moderation" role="status">Tu comentario está pendiente de moderación.</p><?php endif; ?>
         <div class="comment-content"><?php comment_text($comment,array_merge($args,array('add_below'=>'div-comment'))); ?></div>
         <footer class="comment-actions">

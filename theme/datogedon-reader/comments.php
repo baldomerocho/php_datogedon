@@ -27,6 +27,7 @@ $asterisk=$required?' <span aria-hidden="true">*</span>':'';
         'author'=>'<p class="comment-form-author"><label for="author">Nombre'.$asterisk.'</label><input id="author" name="author" type="text" autocomplete="name" value="'.esc_attr($commenter['comment_author']).'" maxlength="245"'.$attributes.' /></p>',
         'email'=>'<p class="comment-form-email"><label for="email">Correo electrónico'.$asterisk.'</label><input id="email" name="email" type="email" autocomplete="email" value="'.esc_attr($commenter['comment_author_email']).'" maxlength="100"'.$attributes.' /></p>',
     );
+    if(get_option('show_comments_cookies_opt_in')) $fields['cookies']='<p class="comment-form-cookies-consent"><input id="wp-comment-cookies-consent" name="wp-comment-cookies-consent" type="checkbox" value="yes"'.checked(!empty($commenter['comment_author_email']),true,false).' /><label for="wp-comment-cookies-consent">Guardar mi nombre y correo en este navegador para la próxima vez.</label></p>';
     comment_form(array(
         'fields'=>$fields,
         'comment_field'=>'<p class="comment-form-comment"><label for="comment">Comentario <span aria-hidden="true">*</span></label><textarea id="comment" name="comment" rows="5" required aria-required="true" placeholder="Escribe tu comentario…"></textarea></p>',
