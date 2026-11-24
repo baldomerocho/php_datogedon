@@ -25,9 +25,10 @@ cabecera, relacionados, comentarios ni pie. El tiempo de pestaña oculta o sin f
 no cuenta. Estos hitos indican exposición al contenido; no demuestran comprensión.
 Los eventos de colaboración indican intención, no un formulario enviado con éxito.
 
-Los eventos nuevos no incluyen texto escrito, emails, títulos, URLs con parámetros,
-identificadores personales ni contenido de formularios. Las palabras buscadas siguen
-el seguimiento nativo ya configurado en Matomo. Los eventos pasan por ese tracker y
+Las etiquetas de los eventos nuevos no incluyen texto escrito, emails, títulos,
+URLs con parámetros, identificadores personales ni contenido de formularios.
+Matomo conserva el contexto habitual de la página, incluida su URL. Las palabras
+buscadas siguen el seguimiento nativo ya configurado en Matomo. Los eventos pasan por ese tracker y
 sus decisiones de consentimiento/exclusión; no hay un envío alternativo ni cookies
 adicionales. Si Matomo está bloqueado o ausente, la navegación sigue funcionando.
 
