@@ -15,3 +15,5 @@ test-results/
 ._*
 *.tar.gz
 *.zip
+__pycache__/
+*.pyc
