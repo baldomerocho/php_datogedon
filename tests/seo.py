@@ -67,7 +67,14 @@ if len(sys.argv)>2:
         if post.get('status')!='publish':return
         target=base+urlsplit(post['url']).path
         code,url,body=fetch(target);assert code==200,(post['id'],code,target)
-        p=HTML();p.feed(body);assert len(p.canonical)==1;assert urlsplit(p.canonical[0]).path==urlsplit(post['url']).path,(post['id'],p.canonical)
-    list(ThreadPoolExecutor(max_workers=4).map(check_post,posts))
+        p=HTML();p.feed(body)
+        # Confirmation/contact pages may intentionally remain noindex; Rank Math
+        # omits their canonical. Do not force legacy utility pages into the index.
+        if 'noindex' in p.meta.get('robots',''):return 'noindex'
+        assert len(p.canonical)==1,(post['id'],p.canonical)
+        assert urlsplit(p.canonical[0]).path==urlsplit(post['url']).path,(post['id'],p.canonical)
+        return 'indexable'
+    results=list(ThreadPoolExecutor(max_workers=4).map(check_post,posts))
+    print('Indexable with self canonical:',results.count('indexable'),'intentional noindex:',results.count('noindex'))
     print('OK all published routes:',len([p for p in posts if p.get('status')=='publish']))
 print('SEO structure checks passed')
