@@ -102,3 +102,6 @@ El ejecutor local, la conciliación de cola y los avisos están en `editorial/`.
 El servidor ejecuta WP-Cron mediante un timer propio. Consulta
 [operación y recuperación editorial](docs/editorial-automation.md). La evidencia
 privada y las conversaciones quedan fuera de este repositorio.
+
+El índice nativo de artículos, la compatibilidad de anclas y la recuperación de
+TOC+ se documentan en [tabla de contenido](docs/table-of-contents.md).

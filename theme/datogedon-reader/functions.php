@@ -3,6 +3,8 @@
  * Datogedon Reader functions and definitions
  */
 
+require_once get_template_directory().'/inc/contents.php';
+
 if ( ! function_exists( 'datogedon_reader_setup' ) ) :
     function datogedon_reader_setup() {
         // Let WordPress manage the document title

@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Keep native fragment navigation/history; focus the section for keyboard users.
+    document.querySelectorAll('.article-toc a[href^="#"]').forEach(link => {
+        link.addEventListener('click', e => {
+            if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+            const heading = target && target.closest('[data-article-heading]');
+            if (heading) requestAnimationFrame(() => heading.focus({preventScroll: true}));
+        });
+    });
+
     // Jump to the native form without losing keyboard focus.
     document.querySelectorAll('.comment-jump').forEach(link => {
         link.addEventListener('click', e => {

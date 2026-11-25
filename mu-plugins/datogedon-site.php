@@ -162,6 +162,10 @@ if (defined('WP_CLI') && WP_CLI) {
         $owner_id = isset($assoc['owner']) ? (int) $assoc['owner'] : 0;
         $owner = get_user_by('id', $owner_id);
         if (!$owner) WP_CLI::error('Indica un autor existente mediante --owner=ID.');
+        if(function_exists('datogedon_reader_toc_migrate')) {
+            $migration=datogedon_reader_toc_migrate();
+            if(is_wp_error($migration))WP_CLI::error($migration->get_error_message());
+        }
         update_option('datogedon_owner_user_id', $owner_id);
         // Native free-mode option: no account or API key is required.
         update_option('rank_math_registration_skip', true);

@@ -3,7 +3,7 @@ Theme Name: Datogedon Reader
 Theme URI: https://datogedon.com
 Author: Datogedon & Antigravity
 Description: A premium, ultra-fast, minimalist WordPress theme optimized for SEO and readability. Native dark mode, single column layout, zero dependencies, and complete compatibility with caching and SEO plugins.
-Version: 1.4.0
+Version: 1.5.0
 Text Domain: datogedon-reader
 */
 
@@ -1541,3 +1541,28 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline:3px solid #08
 .comment-welcome { font-size:.875rem;line-height:1.7;color:var(--text); }
 .comments-area > .comment-respond { margin:0 0 2rem; }
 @media(max-width:600px) { .discussion-featured { padding:1rem; } .discussion-invitation p { font-size:1rem; } }
+
+/* Article contents: native disclosure and anchors, no JavaScript dependency. */
+.article-toc { margin:2rem 0 2.5rem;border:1px solid var(--border);border-radius:12px;background:var(--bg-card);font-family:var(--font-sans);font-size:.9375rem;line-height:1.5; }
+.article-toc summary { display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;cursor:pointer;color:var(--text-headings);font-weight:600;list-style:none; }
+.article-toc summary::-webkit-details-marker { display:none; }
+.article-toc summary::after { content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:.3rem;flex-shrink:0; }
+.article-toc[open] summary::after { transform:rotate(225deg); }
+.article-toc-count { margin-left:auto;font-size:.75rem;color:var(--text-muted);font-weight:400;white-space:nowrap; }
+.post-content .article-toc ol { list-style:none;margin:0;padding:0; }
+.article-toc nav { border-top:1px solid var(--border);padding:.6rem 1.25rem 1rem; }
+.post-content .article-toc li { margin:0;padding:0; }
+.post-content .article-toc li ol { margin:0 0 .25rem .65rem;padding-left:.85rem;border-left:1px solid var(--border); }
+.post-content .article-toc a { display:block;padding:.55rem .25rem;line-height:1.5;text-decoration:none;border:0;overflow-wrap:anywhere;color:var(--text); }
+.post-content .article-toc a:hover { text-decoration:underline;text-underline-offset:.2em;color:var(--text-headings); }
+.article-toc summary:focus-visible,.post-content .article-toc a:focus-visible { outline:2px solid var(--accent);outline-offset:3px;border-radius:3px; }
+.post-content [data-article-heading],.post-content .article-anchor,.post-content [data-article-heading] [id] { scroll-margin-top:calc(var(--header-height) + 32px); }
+.article-anchor { display:block;height:0; }
+.post-content [data-article-heading]:focus { outline:none; }
+.post-content [data-article-heading]:focus-visible { outline:2px solid var(--accent);outline-offset:6px; }
+@media(max-width:600px) {
+    .article-toc summary { padding:.9rem 1rem;gap:.5rem; }
+    .article-toc nav { padding:.5rem 1rem .8rem; }
+    .article-toc-count { font-size:.7rem; }
+}
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
