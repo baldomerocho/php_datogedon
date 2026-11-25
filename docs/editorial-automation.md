@@ -123,3 +123,23 @@ mismo ID. Registrar el intento anterior y la recuperación en el libro de ciclos
 actualizar fechas remotas de la cola después de publicar y crear la constancia
 `cycle-success` únicamente tras comprobar el resultado. No borrar intentos ni
 relanzar publicaciones inciertas sin consultar su estado real.
+
+
+### TikTok: México y música complementaria
+
+Los nuevos briefs priorizan México; Colombia, Argentina y España sirven de
+contraste. Español latino informal, sin perder rigor ni forzar regionalismos.
+El gancho, intro de un segundo y outro aprobados se mantienen. El maestro MP4
+conserva la voz normalizada, para añadir el sonido nativo en TikTok después.
+
+El redactor prepara `private/video-distribution-ID.json` junto al brief, con
+candidatos musicales y evidencia fechada por país/período. En noticias consulta
+las tendencias públicas mediante la búsqueda existente; sin evidencia registra
+`needs_review`, sin bloquear publicación ni render. No se confunde popularidad
+acumulada con crecimiento. No hay integración autenticada con Discovery API;
+la selección y escucha final siguen siendo una revisión en TikTok.
+
+Ganancia musical inicial entre -18 y -13 dB según densidad y escucha móvil;
+no representa diferencia LUFS contra la voz. No se aplican cambios retroactivos
+al video Rust aprobado ni a su borrador en TikTok. Las comparaciones registran
+sonido/versión, nivel y resultados disponibles, sin inferir causalidad de una pieza.

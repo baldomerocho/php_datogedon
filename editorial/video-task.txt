@@ -21,13 +21,14 @@ jerga como nightly o frontend sin contexto; introdúcela después en lenguaje cl
 El «chisme» es el hecho que despierta curiosidad, nunca un rumor o exageración.
 Después del gancho el padre inserta una intro visual de un segundo con el logo. El resto desarrolla el
 contenido. El padre muestra el logo y «Comparte» sobre los últimos segundos de la
-voz. No agregues música, efectos ni una despedida hablada extra.
+voz. El MP4 maestro conserva solo voz; la música complementaria se selecciona después
+en TikTok según el plan de distribución. No agregues efectos ni despedida hablada extra.
 Incluye series_title="Noticias de tecnología" para noticias o "Experiencias con IA"
 para relatos personales; el título del tema va en los gráficos de contenido.
 
 Guion de 40–180 palabras, objetivo 40–60 s: hecho relevante, qué cambia, un dato
 con sus límites y una pregunta concreta al público. Sin relleno, dramatización,
-promesas de rendimiento, voz imitada ni música. Cada chunk es una frase corta
+promesas de rendimiento ni voz imitada. Cada chunk es una frase corta
 <=155 caracteres. Usa oraciones completas; no cortes una frase para ajustar
 subtítulos. Agrupa dos oraciones cortas cuando quepan: mejora la prosodia y reduce
 llamadas de audio. El montaje mide cada fragmento y adapta los subtítulos. Los gráficos
@@ -53,3 +54,39 @@ Headlines de hasta 3 líneas, 6–8 palabras como máximo. Los campos de gráfic
 pintan grandes: no incluyas párrafos. El redactor revisa la relevancia y veracidad;
 la validación mecánica no sustituye esa revisión. Si no hay resumen fiel o el tema
 requiere demasiados matices, deja constancia y conserva el artículo sin video.
+
+AUDIENCIA Y ESTILO:
+Mercado prioritario México (MX); contraste secundario Colombia (CO), Argentina
+(AR) y España (ES). Es una estrategia editorial, no una afirmación de tamaño de
+mercado ni una garantía de distribución hacia otros países. Usa español latino
+conversacional, cercano y ágil: explica como un developer a otro, sin tono de
+noticiero ni modismos mexicanos forzados. Conserva datos, límites y fuentes.
+Gancho concreto, curiosidad y pregunta que invite a opinar, sin sensacionalismo.
+
+PLAN DE DISTRIBUCIÓN PRIVADO, separado del guion y del artículo:
+Después del brief escribe private/video-distribution-ID.json con post_id,
+primary_market="MX", comparison_markets=["CO","AR","ES"], language="es-419",
+style="informal_informativo", music_gain_db_range=[-18,-13], music_status,
+candidates y reviewed_at (ISO con zona). No introduzcas estos metadatos en el post.
+Para noticias, aprovecha la búsqueda web disponible para revisar Creative Center
+oficial con región México y datos de los últimos siete días. Contrasta otros países
+solo si hay datos comparables. Reutiliza evidencia de tendencias del mismo día
+si existe; no abras otro agente ni hagas sondeos periódicos adicionales.
+Cada candidato (máximo tres) lleva título, artista/versión, URL de evidencia,
+país, período y hora observados, razón de afinidad y métricas SOLO si son visibles.
+Prioriza crecimiento reciente y afinidad con tecnología sobre acumulados históricos.
+Un sonido sugerido por gusto o por el usuario no se presenta como tendencia
+verificada. Sin datos actuales: music_status="needs_review", candidates=[],
+reason explícito. No inventes posiciones, incrementos ni pistas para llenar cupos.
+La falta de tendencias no bloquea el artículo ni el render de voz.
+No hay credenciales Discovery API configuradas: no simules llamadas ni descargues
+música. Su catálogo CML no equivale a todos los sonidos virales de la app.
+Selección final en TikTok con su identificador nativo y escucha de la mezcla.
+Usa -18 dB para fondos densos/con voces y prueba hasta -13 dB para instrumentales
+suaves, según escucha; son ganancias de la pista, no diferencias LUFS medidas.
+Comprueba cada palabra en altavoz móvil y que la pista cubra el video; no rellenes
+con silencios ni aceleres la voz. Registra valor final y versión de sonido.
+Para evaluar: fecha, país si disponible, duración, sonido/versión, ganancia,
+visualizaciones, tiempo medio, finalización, compartidos y seguidores obtenidos.
+Datos ausentes son null; no atribuyas causalidad a la música con un solo video ni
+inventes retención de cuentas ajenas. Compara varias piezas de duración/tema similares.
