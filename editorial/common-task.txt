@@ -25,6 +25,10 @@ con rsvg-convert y cwebp. Ilustraciones generadas se identifican como ilustracio
 no como fotografías documentales. No imites la foto/composición de la fuente.
 Fotos gratuitas requieren verificar licencia exacta y crédito enlazado; el crédito
 no sustituye permiso. Usa imágenes interiores solo si ayudan a explicar.
+No cierres el artículo con detalles operativos sobre dónde están los enlaces.
+Para una portada propia que ya lleva la marca de Datogedon, omite frases redundantes
+como «Ilustración de portada original de Datogedon». Conserva los créditos de
+terceros y la identificación necesaria para no confundir ilustraciones con fotos.
 
 ENLAZADO INTERNO: antes de cerrar el borrador busca 2–4 conceptos concretos con
 find-related-posts; el catálogo private/internal-link-catalog.json permite descubrir

@@ -41,9 +41,13 @@ consecuencia. Explica qué cambia, a quién afecta, datos necesarios, limitacion
 qué hacer si corresponde. Distingue hechos, anuncios del proveedor e interpretación.
 Sin introducciones genéricas, relleno SEO ni conclusión repetida. 400–800 palabras
 como orientación, sin mínimo narrativo: una novedad sencilla puede ser breve.
-Incluye enlaces a las fuentes JUNTO a sus afirmaciones y una lista breve de fuentes;
-source_urls del payload debe contener las URLs exactas citadas (al menos dos
-dominios). No uses nofollow para citas editoriales normales. No copies la redacción.
+Cita las fuentes relevantes en el texto y termina con <h2>Fuentes</h2> y una lista
+<ul> de enlaces <a> descriptivos (publicación/autor y título; fecha cuando aporte
+contexto). No basta una lista de nombres sin enlaces. Constrúyela desde source_urls,
+sin duplicar URLs dentro de la lista ni convertir enlaces internos o descargas en
+fuentes por el mero hecho de aparecer en el artículo. No expliques dónde están los
+enlaces. source_urls del payload debe contener las URLs exactas citadas (al menos
+dos dominios). No uses nofollow para citas editoriales normales. No copies la redacción.
 No inventes vivencias, emociones o revisión humana que no haya ocurrido.
 Usa una pregunta concreta al lector si ayuda; no provoques controversia artificial.
 
