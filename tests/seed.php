@@ -10,6 +10,8 @@ wp_insert_post(array('post_type'=>'page','post_name'=>'contacto','post_title'=>'
 for($i=1;$i<=15;$i++) {
     $id=wp_insert_post(array('post_title'=>'Revisar una integración con IA '.$i,'post_name'=>'integracion-ia-'.$i,'post_content'=>'<p>Definí las condiciones de una integración y revisé con el asistente cómo comprobar el resultado.</p><h2>La decisión técnica</h2><p>Contrasté la propuesta con los datos disponibles antes de aplicarla.</p>','post_status'=>'publish','post_author'=>1,'post_category'=>array($web,$ai)));
     update_post_meta($id,'rank_math_primary_category',$web);
+    if($i>=14){update_post_meta($id,'_datogedon_kind','news');wp_set_post_terms($id,array('Noticias'),'post_tag');}
+    elseif($i>=10){update_post_meta($id,'_datogedon_kind','experience');update_post_meta($id,'_datogedon_editorial_id','ci-home-'.$i);}
 }
 update_option('permalink_structure','/%category%/%postname%/');
 wp_insert_post(array('post_title'=>'Una entrada futura','post_name'=>'entrada-futura','post_status'=>'future','post_date'=>wp_date('Y-m-d H:i:s',time()+86400),'post_content'=>'Publicación programada.','post_author'=>1));

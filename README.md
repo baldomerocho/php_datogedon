@@ -105,3 +105,21 @@ privada y las conversaciones quedan fuera de este repositorio.
 
 El índice nativo de artículos, la compatibilidad de anclas y la recuperación de
 TOC+ se documentan en [tabla de contenido](docs/table-of-contents.md).
+
+
+## Portada editorial
+
+La primera página agrupa los 12 resultados de la consulta principal: noticias
+(por etiqueta `noticias` o `_datogedon_kind=news`), hasta tres experiencias con IA
+y el resto del archivo. Cada artículo aparece una vez; la paginación original
+conserva sus límites. Sin noticias se muestra una portada general, sin secciones
+vacías. No se consulta ni reclasifica todo el histórico para construir el home.
+
+`home.css` solo se carga en la primera página del blog. Las nuevas tarjetas
+conservan `Navigation/article_open` en Matomo con etiquetas `post:ID`; no se
+registran titulares ni búsquedas como etiquetas de eventos. Los archivos,
+artículos, comentarios y URLs conservan sus plantillas y estructura.
+
+CI comprueba composición completa sin duplicados, estados vacíos, conservación
+del post global, móvil/escritorio, temas claro/oscuro, navegación sin JavaScript
+y continuidad entre páginas mediante `tests/home.php` y `tests/home-ui.cjs`.

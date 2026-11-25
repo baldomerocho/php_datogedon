@@ -45,7 +45,7 @@ const assert=require('node:assert/strict');
  assert.ok(!JSON.stringify(await commands()).includes('private-query'));
  await page.locator('.hero-links a').first().evaluate(a=>a.addEventListener('click',e=>e.preventDefault()));
  await page.locator('.hero-links a').first().click();assert.equal(await count('Navigation','section_open'),1);
- const card=page.locator('.featured-post-card h2 a').first();const articleUrl=await card.getAttribute('href');
+ const card=page.locator('.home-story--lead h3 a').first();const articleUrl=await card.getAttribute('href');
  await card.evaluate(a=>a.addEventListener('click',e=>e.preventDefault()));await card.click();assert.equal(await count('Navigation','article_open'),1);
  const collab=page.locator('#main-nav a[href$="/colabora/"]').first();
  await collab.evaluate(a=>a.addEventListener('click',e=>e.preventDefault()));await page.locator('#menu-toggle').click();await collab.click();

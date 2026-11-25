@@ -4,6 +4,7 @@
  */
 
 require_once get_template_directory().'/inc/contents.php';
+require_once get_template_directory().'/inc/home.php';
 
 if ( ! function_exists( 'datogedon_reader_setup' ) ) :
     function datogedon_reader_setup() {
@@ -59,6 +60,8 @@ function datogedon_reader_scripts() {
 
     // Stylesheet
     wp_enqueue_style( 'datogedon-reader-style', get_stylesheet_uri(), array(), $css_version );
+
+    if(is_home() && !is_paged())wp_enqueue_style('datogedon-home',get_template_directory_uri().'/home.css',array('datogedon-reader-style'),filemtime(get_template_directory().'/home.css'));
 
     if (is_singular() && comments_open() && get_option('thread_comments')) wp_enqueue_script('comment-reply');
 

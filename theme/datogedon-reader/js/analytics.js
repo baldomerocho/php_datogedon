@@ -63,11 +63,12 @@
             if (id && /^\d+$/.test(id) && !target.hash) {
                 if (link.closest('.related-posts')) event('Navigation', 'related_open', 'post:' + id);
                 else if (link.classList.contains('autocomplete-item')) event('Search', 'autocomplete_select', 'post:' + id);
+                else if (link.closest('.home-story') && (link.matches('.home-story-image') || link.closest('h3'))) event('Navigation', 'article_open', 'post:' + id);
                 else if (link.closest('.post-card, .featured-post-card') && (link.matches('.read-more-link, .card-thumbnail, .featured-post-image') || link.closest('h2'))) event('Navigation', 'article_open', 'post:' + id);
                 return;
             }
             if (link.closest('#main-nav, .hero-links')) {
-                const sections = {'/': 'home', '/temas': 'topics', '/experiencias-con-ia': 'experiences', '/acerca-de': 'about'};
+                const sections = {'/': 'home', '/temas': 'topics', '/experiencias-con-ia': 'experiences', '/acerca-de': 'about', '/tag/noticias': 'news'};
                 if (sections[path]) event('Navigation', 'section_open', sections[path]);
             }
         });

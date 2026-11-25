@@ -54,6 +54,7 @@ jobs:
           php /tmp/wp plugin install table-of-contents-plus --version=202609.1 --activate --path=/tmp/wordpress --quiet
           php /tmp/wp theme activate datogedon-reader --path=/tmp/wordpress --quiet
           php /tmp/wp eval-file "$PWD/tests/seed.php" --path=/tmp/wordpress
+          php /tmp/wp eval-file "$PWD/tests/home.php" --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/tests/toc.php" --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/tests/comments.php" --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/tests/editorial-abilities.php" --path=/tmp/wordpress
@@ -74,6 +75,7 @@ jobs:
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
           SITE_URL=http://127.0.0.1:8094 node tests/browser.cjs
+          SITE_URL=http://127.0.0.1:8094 node tests/home-ui.cjs
           SITE_URL=http://127.0.0.1:8094 node tests/toc-ui.cjs
           SITE_URL=http://127.0.0.1:8094 node tests/comments-ui.cjs
           SITE_URL=http://127.0.0.1:8094 node tests/analytics.cjs

@@ -176,8 +176,8 @@ if (defined('WP_CLI') && WP_CLI) {
         $titles['disable_author_archives'] = 'off';
         $titles['author_custom_robots'] = 'on';
         $titles['author_robots'] = array('index');
-        $titles['homepage_title'] = 'DATOGEDON | Desarrollo de software con IA';
-        $titles['homepage_description'] = 'Experiencias reales programando aplicaciones con inteligencia artificial: problemas, decisiones técnicas y colaboración entre personas y asistentes de IA.';
+        $titles['homepage_title'] = 'DATOGEDON | Tecnología y desarrollo con IA';
+        $titles['homepage_description'] = 'Noticias de tecnología, experiencias programando con inteligencia artificial y guías para crear aplicaciones. Fuentes, decisiones y resultados.';
         $titles['open_graph_image'] = get_template_directory_uri().'/assets/social.png';
         update_option('rank-math-options-titles', $titles);
         $general = get_option('rank-math-options-general', array());
