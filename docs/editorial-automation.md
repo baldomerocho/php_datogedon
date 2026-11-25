@@ -143,3 +143,20 @@ Ganancia musical inicial entre -18 y -13 dB según densidad y escucha móvil;
 no representa diferencia LUFS contra la voz. No se aplican cambios retroactivos
 al video Rust aprobado ni a su borrador en TikTok. Las comparaciones registran
 sonido/versión, nivel y resultados disponibles, sin inferir causalidad de una pieza.
+
+
+### Publicación de videos y relación con artículos
+
+Autorización editorial: noticias se publican al verificar el artículo público;
+experiencias se programan a la fecha del artículo o después. Verificar el permalink
+público y su estado, no solo la fecha planificada. Si el artículo aún es futuro,
+la liberación del video queda pendiente de esa comprobación; programar dos sistemas
+por reloj no asegura que WordPress esté disponible. La carga se hace en el Chrome
+Datogedon autorizado, separada del redactor, y se verifica en Studio. Un intento
+incierto requiere conciliación antes de otro envío.
+
+La URL de TikTok confirmada se vincula en una sección del artículo original,
+conservando título, slug y fecha de publicación. No se crea otro post ni una URL
+vacía para el video programado. Por ahora la referencia es un enlace ligero:
+no añade reproductores ni scripts de terceros al cargar la página. Una futura
+biblioteca de videos podrá reutilizar estas relaciones sin duplicar artículos.

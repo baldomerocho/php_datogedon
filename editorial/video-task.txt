@@ -1,12 +1,20 @@
 
-VIDEO LOCAL AUTORIZADO PARA @datogedon (NO SUBIR A TIKTOK):
+PREPARACIÓN DE VIDEO PARA @datogedon:
 Después de publicar y verificar el artículo prepara private/video-brief-ID.json.
 Usa SOLO el artículo ya público y sus fuentes verificadas, nunca conversaciones
 ni evidencia original. No añadas afirmaciones que no estén en ese texto.
 El padre genera MP4 vertical con voz Gemini en español latino, gráficos y subtítulos.
 No invoques el renderizador ni otro agente: el padre lo hace una vez y mantiene
 el estado del video separado del éxito del artículo. No subas medios a TikTok ni
-Metricool; no simules que la conexión o una publicación existen.
+Metricool desde este redactor: la publicación usa el Chrome autorizado en un paso
+separado. Noticias: publicar inmediatamente tras verificar que el artículo está
+público. Experiencias: programar a la fecha del post o después; nunca antes.
+Un post future requiere confirmación pública al llegar su fecha antes de publicar
+el video; si no se puede garantizar, conservarlo pendiente, no confiar solo en
+que WordPress cumplirá el horario. Evita duplicar videos ya publicados.
+No simules conexiones, publicación, programación ni URLs de TikTok. Después de
+confirmar video público se añade su referencia al MISMO artículo; los programados
+no se anuncian como disponibles. No crear entradas duplicadas para el video.
 
 Estructura común: primera escena es un gancho breve (una o dos frases).
 En los primeros 1–2 segundos identifica QUIÉN + QUÉ pasó: nombre reconocible

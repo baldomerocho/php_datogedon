@@ -361,4 +361,20 @@ class VideoMotion(unittest.TestCase):
         self.assertEqual(values,sorted(values))
         with self.assertRaises(ValueError):progress(1,0,0)
 
+
+class VideoReference(unittest.TestCase):
+    def reference(self,content,url='https://www.tiktok.com/@datogedon/video/12345'):
+        import runpy
+        return runpy.run_path(str(Path(__file__).resolve().parents[1]/'editorial/link-video.py'))['reference'](content,url)
+    def test_reference_preserves_sources_and_is_idempotent(self):
+        body='<p>Original</p><h2>Fuentes</h2><ul><li>Source</li></ul>'
+        result=self.reference(body)
+        self.assertTrue(result.endswith('<h2>Fuentes</h2><ul><li>Source</li></ul>'))
+        self.assertEqual(self.reference(result),result)
+        self.assertIn('<p>Original</p>',result)
+    def test_reference_rejects_other_accounts_and_ambiguous_markers(self):
+        for url in ['https://www.tiktok.com/@other/video/123','https://www.tiktok.com/@datogedon/video/123?x=1','https://example.invalid/video/123']:
+            with self.assertRaises(ValueError):self.reference('Original',url)
+        with self.assertRaises(ValueError):self.reference('<!-- datogedon-video:start -->')
+
 if __name__=='__main__':unittest.main()
