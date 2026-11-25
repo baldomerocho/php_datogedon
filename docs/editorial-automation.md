@@ -101,3 +101,25 @@ frescura, archivo retirado, horarios, transición de cadencia, estado atómico,
 calidad, límite diario, idempotencia y salida cero con programación incorrecta.
 Las pruebas de orquestación simulan el redactor; la ejecución desatendida real del
 24 de noviembre se verificó por sus borradores, imágenes y estados futuros remotos.
+
+
+### Recuperación de verificadores y ciclos pendientes
+
+El proceso Codex utiliza un perfil de permisos efímero `datogedon-editorial` que
+extiende `:workspace` y habilita red para sus comandos. Se transmite por `-c` solo
+a ese proceso; no modifica la configuración global ni elimina las protecciones
+de escritura. `--search` habilita búsqueda, pero no concede por sí mismo red a
+Python/los verificadores. Se comprobó DNS/HTTPS y un borrador real dentro del
+sandbox con el mismo perfil (CLI 0.172.0).
+
+El conteo compara todos los IDs anteriores, incluidos borradores pendientes de
+otras ventanas. También reconoce un borrador ya existente que pasa a publicado
+cuando pertenece a la ventana actual mediante `cycle_key`. Así una recuperación
+no cuenta trabajo ajeno como una segunda publicación ni crea otra copia.
+
+Un ciclo fallido requiere conciliación explícita: verificar WordPress, conservar
+ID/editorial_id/miniatura, contrastar fuentes, validar el borrador y publicar el
+mismo ID. Registrar el intento anterior y la recuperación en el libro de ciclos;
+actualizar fechas remotas de la cola después de publicar y crear la constancia
+`cycle-success` únicamente tras comprobar el resultado. No borrar intentos ni
+relanzar publicaciones inciertas sin consultar su estado real.

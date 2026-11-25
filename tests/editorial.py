@@ -80,7 +80,7 @@ class Editorial(unittest.TestCase):
                     self.prompt=prompt
             with patch('runtime.now',return_value=datetime(2026,11,24,14,tzinfo=TZ)),patch('runtime.collect',return_value={'sessions':[item]}),patch('runtime.WordPress',FakeWP),patch('runtime.reconcile',side_effect=snapshots),patch('runtime.shutil.which',return_value='/synthetic/codex'),patch('runtime.subprocess.Popen',return_value=Writer()) as process,patch('runtime.notify') as alert,contextlib.redirect_stdout(io.StringIO()):
                 result=execute(root,args)
-                self.assertEqual(process.call_args.args[0][process.call_args.args[0].index('-s')+1],'workspace-write')
+                self.assertIn('permissions.datogedon-editorial.extends=":workspace"',process.call_args.args[0])
                 self.assertEqual(result,1 if wrong_slot else 0)
                 if wrong_slot:
                     alert.assert_called_once();self.assertIsNone(read(root/'private/last-success.json'));self.assertEqual(read(root/'daily-status.json')['stage'],'failed')
@@ -164,6 +164,29 @@ class NewsRuntime(unittest.TestCase):
                 collector.assert_not_called();self.assertIn('--search',worker.call_args.args[0])
                 self.assertEqual(result,0 if author==135 else 1)
                 self.assertEqual(success_path(root).exists(),author==135)
+    def test_previous_failed_draft_does_not_count_as_a_new_article(self):
+        from runtime import cycle_changes
+        before=[{'id':1,'status':'publish'},{'id':2,'status':'draft'}]
+        after=before+[{'id':3,'status':'draft'}]
+        queue={'posts':[{'post_id':2,'cycle_key':'old'},{'post_id':3,'cycle_key':'current'}]}
+        self.assertEqual([p['id'] for p in cycle_changes(before,after,queue,{'key':'current'})],[3])
+        after[-1]['status']='publish'
+        self.assertEqual([p['id'] for p in cycle_changes(before,after,queue,{'key':'current'})],[3])
+    def test_only_a_published_draft_owned_by_this_cycle_is_resumed(self):
+        from runtime import cycle_changes
+        before=[{'id':2,'status':'draft'},{'id':3,'status':'draft'}]
+        queue={'posts':[{'post_id':2,'cycle_key':'old'},{'post_id':3,'cycle_key':'current'}]}
+        self.assertEqual(cycle_changes(before,before,queue,{'key':'current'}),[])
+        after=[{'id':2,'status':'draft'},{'id':3,'status':'publish'}]
+        self.assertEqual([p['id'] for p in cycle_changes(before,after,queue,{'key':'current'})],[3])
+    def test_writer_has_network_without_unrestricted_filesystem_access(self):
+        from runtime import writer_command
+        command=writer_command('/synthetic/codex',Path('/synthetic/news'),True)
+        self.assertIn('permissions.datogedon-editorial.network.enabled=true',command)
+        self.assertIn('permissions.datogedon-editorial.extends=":workspace"',command)
+        self.assertNotIn('danger-full-access',command)
+        self.assertIn('--search',command)
+
     def test_news_publishes_same_day_without_private_collection(self):self.run_case(135)
     def test_wrong_author_cannot_be_marked_success(self):self.run_case(1)
 

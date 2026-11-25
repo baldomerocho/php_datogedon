@@ -160,6 +160,18 @@ def execute(root,args):
     try:return _locked(root,args,current,day,config,private)
     finally:lock.close()
 
+def writer_command(command,root,news=False):
+    # Explicit per-process network permission; keep workspace filesystem protections.
+    args=[command,'-c','default_permissions="datogedon-editorial"','-c','permissions.datogedon-editorial.extends=":workspace"',
+          '-c','permissions.datogedon-editorial.network.enabled=true']
+    if news:args.append('--search')
+    return args+['exec','--skip-git-repo-check','-C',str(root),'--color','never','-o',str(root/'private/last-editorial-run.txt'),'-']
+
+def cycle_changes(before,after,queue,cycle):
+    previous={p['id']:p['status'] for p in before}
+    owned={int(p['post_id']) for p in queue['posts'] if p.get('cycle_key')==cycle.get('key') and previous.get(p['post_id'])=='draft'}
+    return [p for p in after if p['id'] not in previous or p['id'] in owned and p['status']=='publish']
+
 def _locked(root,args,current,day,config,private):
     if args.health or args.verify_only:
         snapshot=reconcile(root,WordPress(args.credentials));issues=list(snapshot['issues'])
@@ -213,7 +225,7 @@ def _locked(root,args,current,day,config,private):
             snapshot[taxonomy]=items
         write(root/'wordpress-taxonomies.json',snapshot)
         status['stage']='writing';write(root/'daily-status.json',status)
-        original_ids={p['id'] for p in before['posts'] if not cycle or p['status']!='draft'};command=shutil.which('codex')
+        original_ids={p['id'] for p in before['posts']};command=shutil.which('codex')
         if not command:raise RuntimeError('Codex no está en PATH')
         prompt=(root/('NEWS-TASK.txt' if cycle.get('mode')=='news' else 'DAILY-TASK.txt')).read_text().replace('{{CHECK_POST}}',shlex.join([sys.executable,str(Path(__file__).with_name('check-post.py'))]))+('\nLee private/cycle-context.json: una entrada como máximo, publicación en este ciclo y fecha local de hoy; no reserves días futuros.\n' if cycle else '\nConsulta private/editorial-calendar.json; usa solo sus next_slots para nuevas entradas. No cambies fechas existentes.\n')
         prompt+='\n'+Path(__file__).with_name('common-task.txt').read_text().replace('{{CHECK_POST}}',shlex.join([sys.executable,str(Path(__file__).with_name('check-post.py'))])).replace('{{LINK_CHECK}}',shlex.join([sys.executable,str(Path(__file__).with_name('internal_links.py'))]))
@@ -222,14 +234,15 @@ def _locked(root,args,current,day,config,private):
         if cycle:write(private/'internal-link-catalog.json',catalog(wp))
         with (private/'worker.log').open('a') as log:
             os.chmod(private/'worker.log',0o600)
-            process=subprocess.Popen([command,*(['--search'] if cycle.get('mode')=='news' else []),'exec','--skip-git-repo-check','-C',str(root),'-s','workspace-write','--color','never','-o',str(private/'last-editorial-run.txt'),'-'],stdin=subprocess.PIPE,stdout=log,stderr=log,text=True,start_new_session=True)
+            process=subprocess.Popen(writer_command(command,root,cycle.get('mode')=='news'),stdin=subprocess.PIPE,stdout=log,stderr=log,text=True,start_new_session=True)
             try:process.communicate(prompt,timeout=2700)
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid,signal.SIGTERM)
                 try:process.wait(timeout=10)
                 except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
                 raise RuntimeError('La redacción superó 45 minutos; verificar antes de reintentar')
-        after=reconcile(root,wp);new=[p for p in after['posts'] if p['id'] not in original_ids]
+        after=reconcile(root,wp)
+        new=cycle_changes(before['posts'],after['posts'],read(root/'queue.json'),cycle) if cycle else [p for p in after['posts'] if p['id'] not in original_ids]
         latest=read(root/'daily-status.json',{})
         if latest.get('editorial'):status['editorial']=latest['editorial']
         if cycle:
