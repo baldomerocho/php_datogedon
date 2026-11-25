@@ -80,10 +80,14 @@ def card(scene,index,total,brief,path):
     for n in range(total):d.rectangle((90+n*width,1173,90+(n+1)*width-9,1179),fill=orange if n<=index else stroke)
     im.save(path)
 
-def render(brief,output,tts_config):
+def render(brief,output,tts_config,branding=None):
     from gemini_tts import GeminiSpeech
+    from video_finish import branding_spec,brand_card,outro_timeline,master,verify_mastering,verify_frames
+    branding=branding_spec(branding)
     validate(brief);output.mkdir(parents=True,exist_ok=True)
     voice=GeminiSpeech(tts_config);chunks=[];cursor=0;sample_rate=None;audio_parts=[];scenes=[]
+    if branding['enabled']:
+        brand_card(branding,brief,output/'intro.png');brand_card(branding,brief,output/'outro.png',True)
     for scene_index,scene in enumerate(brief['scenes']):
         image=output/f'scene-{scene_index:02}.png';card(scene,scene_index,len(brief['scenes']),brief,image)
         start=cursor
@@ -96,10 +100,14 @@ def render(brief,output,tts_config):
                 sample_rate=stream.getframerate();samples=stream.readframes(stream.getnframes());duration=stream.getnframes()/sample_rate
             pause=.12;audio_parts.append(samples+b'\0\0'*round(pause*sample_rate))
             chunks.append({'start':cursor,'end':cursor+duration,'text':text});cursor+=duration+pause
-        scenes.append({'file':image.name,'duration':cursor-start})
+        scenes.append({'file':image.name,'duration':cursor-start,'kind':'hook' if scene_index==0 else 'body'})
+        if scene_index==0 and branding['enabled']:
+            audio_parts.append(b'\0\0'*round(branding['intro_seconds']*sample_rate));scenes.append({'file':'intro.png','duration':branding['intro_seconds'],'kind':'intro'});cursor+=branding['intro_seconds']
     if not 20<=cursor<=90:raise ValueError('Video must be between 20 and 90 seconds')
     with wave.open(str(output/'narration.wav'),'wb') as out:
         out.setnchannels(1);out.setsampwidth(2);out.setframerate(sample_rate);out.writeframes(b''.join(audio_parts))
+    scenes=outro_timeline(scenes,branding)
+    audio_report=master(output/'narration.wav',output/'narration-mastered.wav')
     srt='\n\n'.join(f"{i+1}\n{timestamp(c['start'])} --> {timestamp(c['end'])}\n{c['text']}" for i,c in enumerate(chunks))+'\n'
     (output/'subtitles.srt').write_text(srt)
     header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Arial,48,&H00FFFFFF,&H00FFFFFF,&HCC111820,&HCC111820,0,0,0,0,100,100,0,0,3,13,0,2,100,180,460,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
@@ -108,14 +116,16 @@ def render(brief,output,tts_config):
         text=c['text'].replace('\\','').replace('{','').replace('}','').replace('\n',' ')
         events.append(f"Dialogue: 0,{timestamp(c['start'],True)},{timestamp(c['end'],True)},Default,,0,0,0,,{text}")
     (output/'captions.ass').write_text(header+'\n'.join(events)+'\n')
-    concat='ffconcat version 1.0\n'+''.join(f"file '{s['file']}'\nduration {s['duration']:.6f}\n" for s in scenes)+f"file '{scenes[-1]['file']}'\n"
+    concat='ffconcat version 1.0\n'+''.join(f"file '{s['file']}'\noption framerate 30\nduration {s['video_duration']:.9f}\n" for s in scenes)+f"file '{scenes[-1]['file']}'\noption framerate 30\n"
     (output/'scenes.ffconcat').write_text(concat)
     vf="fps=30,zoompan=z='1.005+0.003*sin(on/100)':d=1:s=1080x1920:fps=30,subtitles=captions.ass,format=yuv420p"
-    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','concat','-safe','0','-i','scenes.ffconcat','-i','narration.wav','-vf',vf,'-af','loudnorm=I=-16:TP=-1.5:LRA=9','-t',f'{cursor:.6f}','-c:v','libx264','-preset','veryfast','-crf','21','-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart','video.mp4'],cwd=output,check=True,timeout=300)
+    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','concat','-safe','0','-i','scenes.ffconcat','-i','narration-mastered.wav','-vf',vf,'-t',f'{cursor:.6f}','-frames:v',str(sum(s['frame_count'] for s in scenes)),'-c:v','libx264','-preset','veryfast','-crf','21','-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart','video.mp4'],cwd=output,check=True,timeout=300)
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss','1','-i','video.mp4','-frames:v','1','cover.jpg'],cwd=output,check=True,timeout=30)
+    encoded_video=verify_frames(output/'video.mp4',sum(s['frame_count'] for s in scenes))
+    audio_report=verify_mastering(audio_report,output/'video.mp4');(output/'audio-mastering.json').write_text(json.dumps(audio_report,indent=2))
     (output/'caption.txt').write_text(brief['caption']+'\n')
     digest=hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()
-    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None}
+    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
@@ -133,17 +143,26 @@ def enqueue(root,post,config):
         if brief['post_id']!=post['id'] or brief.get('article_url')!=post['link']:raise ValueError('Brief belongs to a different article')
     except (ValueError,TypeError,KeyError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'InvalidBrief','updated_at':now().isoformat(),'published':False};write(queue_path,queue);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'renderer_version':2},sort_keys=True).encode()).hexdigest()
+    from video_finish import branding_spec
+    try:
+        branding=branding_spec(config.get('branding'))
+        if branding['enabled']:
+            mode=read(root/'private/cycle-context.json',{}).get('mode','news')
+            branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
+    except (ValueError,OSError):
+        queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};write(queue_path,queue);return queue['jobs'][key]
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':3},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}
     queue['jobs'][key]=job;write(queue_path,queue)
     tts_config_path=state/'voice-config.json';write(tts_config_path,config['tts'])
+    branding_config_path=state/'branding-config.json';write(branding_config_path,branding)
     process=None
     try:
         with (state/f"render-{key}.log").open('a') as log:
             os.chmod(log.name,0o600)
-            process=subprocess.Popen([str(Path(config['python']).expanduser()),str(Path(__file__).resolve()),'--brief',str(brief_path),'--output',str(output),'--tts-config',str(tts_config_path)],stdout=log,stderr=log,start_new_session=True)
+            process=subprocess.Popen([str(Path(config['python']).expanduser()),str(Path(__file__).resolve()),'--brief',str(brief_path),'--output',str(output),'--tts-config',str(tts_config_path),'--branding-config',str(branding_config_path)],stdout=log,stderr=log,start_new_session=True)
             process.wait(timeout=360)
         if process.returncode:raise RuntimeError('Local renderer failed')
         manifest=read(output/'manifest.json')
@@ -158,5 +177,5 @@ def enqueue(root,post,config):
     write(queue_path,queue);return job
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--brief',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--tts-config',type=Path,required=True);a=p.parse_args()
-    render(json.loads(a.brief.read_text()),a.output.resolve(),json.loads(a.tts_config.read_text()))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--brief',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--tts-config',type=Path,required=True);p.add_argument('--branding-config',type=Path);a=p.parse_args()
+    render(json.loads(a.brief.read_text()),a.output.resolve(),json.loads(a.tts_config.read_text()),json.loads(a.branding_config.read_text()) if a.branding_config else None)

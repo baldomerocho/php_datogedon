@@ -279,4 +279,52 @@ class GeminiAudio(unittest.TestCase):
             env=Path(directory)/'voice.env';env.write_text('PUBLIC_APIKEY=example');env.chmod(0o644)
             with self.assertRaises(SpeechError):credentials(env)
 
+
+class VideoFinishing(unittest.TestCase):
+    def phases(self):return [{'file':'hook.png','duration':4.2,'kind':'hook'},{'file':'intro.png','duration':1,'kind':'intro'},{'file':'body.png','duration':12,'kind':'body'},{'file':'final.png','duration':5.3,'kind':'body'}]
+    def test_intro_is_30_frames_outro_overlaps_final_audio(self):
+        from video_finish import outro_timeline
+        phases=outro_timeline(self.phases(),{'enabled':True,'outro_seconds':3})
+        self.assertEqual([p['frame_count'] for p in phases if p['kind']=='intro'],[30])
+        self.assertEqual(phases[-1]['kind'],'outro');self.assertEqual(phases[-1]['frame_count'],90)
+        self.assertEqual(sum(p['frame_count'] for p in phases),round(sum(p['duration'] for p in self.phases())*30))
+    def test_outro_can_start_before_a_short_final_scene_without_cutting_audio(self):
+        from video_finish import outro_timeline
+        scenes=self.phases();scenes[-1]['duration']=.8
+        phases=outro_timeline(scenes,{'enabled':True,'outro_seconds':3})
+        self.assertEqual(phases[-1]['frame_count'],90);self.assertEqual(phases[0]['duration'],4.2)
+        self.assertAlmostEqual(sum(p['duration'] for p in phases),sum(p['duration'] for p in scenes))
+    def test_logo_hash_changes_when_source_changes(self):
+        from video_finish import branding_spec
+        with tempfile.TemporaryDirectory() as directory:
+            logo=Path(directory)/'logo.png';logo.write_bytes(b'synthetic-logo')
+            before=branding_spec({'enabled':True,'logo_path':str(logo)})
+            logo.write_bytes(b'updated-logo');after=branding_spec({'enabled':True,'logo_path':str(logo)})
+            self.assertNotEqual(before['logo_sha256'],after['logo_sha256'])
+    def test_missing_logo_and_wrong_intro_duration_fail_closed(self):
+        from video_finish import branding_spec
+        with self.assertRaises(ValueError):branding_spec({'enabled':True,'logo_path':'/synthetic/missing.png'})
+        with tempfile.TemporaryDirectory() as directory:
+            logo=Path(directory)/'logo.png';logo.write_bytes(b'fixture')
+            with self.assertRaises(ValueError):branding_spec({'enabled':True,'logo_path':str(logo),'intro_seconds':2})
+    def test_nonfinite_audio_measurement_is_rejected(self):
+        from video_finish import parse_measurements
+        with self.assertRaises(RuntimeError):parse_measurements('no measurements')
+        data={'input_i':'-inf','input_tp':'-2','input_lra':'3','input_thresh':'-25','target_offset':'0'}
+        with self.assertRaises(RuntimeError):parse_measurements(json.dumps(data))
+    def test_truncated_encoded_video_is_rejected(self):
+        from types import SimpleNamespace
+        from video_finish import verify_frames
+        stream={'nb_frames':'1101','width':1080,'height':1920,'r_frame_rate':'30/1','duration':'36.7'}
+        with patch('video_finish.subprocess.run',return_value=SimpleNamespace(stdout=json.dumps({'streams':[stream]}))):
+            with self.assertRaises(RuntimeError):verify_frames('synthetic.mp4',1191)
+        stream.update(nb_frames='1191',duration='39.7')
+        with patch('video_finish.subprocess.run',return_value=SimpleNamespace(stdout=json.dumps({'streams':[stream]}))):self.assertEqual(verify_frames('synthetic.mp4',1191)['frames'],1191)
+    def test_encoded_peak_and_loudness_are_checked(self):
+        from video_finish import verify_mastering
+        with patch('video_finish.measure',return_value={'input_i':-16.1,'input_tp':-1.4}):self.assertIn('encoded_aac',verify_mastering({},'synthetic.mp4'))
+        for values in [{'input_i':-12,'input_tp':-1.4},{'input_i':-16,'input_tp':-.1}]:
+            with patch('video_finish.measure',return_value=values):
+                with self.assertRaises(RuntimeError):verify_mastering({},'synthetic.mp4')
+
 if __name__=='__main__':unittest.main()

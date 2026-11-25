@@ -51,3 +51,25 @@ público de TikTok no sustituye OAuth. Verificar cuenta, límites, metadatos y
 requisitos de publicación al conectar; no crear un bot privado que eluda la
 revisión de TikTok Direct Post. No habilitar publicación automática desde este
 renderizador: solo produce material local para revisión.
+
+## Plantilla de marca y voz para móviles
+
+Secuencia: gancho → intro de **30 fotogramas / 1 segundo** con logo y título de
+la serie → contenido → logo y «Comparte» durante los últimos 3 segundos de la
+narración. La intro incorpora un segundo de silencio, sin cortar frases ni añadir
+música. El outro sustituye la imagen final y no añade silencio al final del video.
+Los subtítulos posteriores al gancho se desplazan junto con el audio de la intro.
+
+`video.branding` configura enabled, logo_path, intro_seconds=1, outro_seconds=3 y
+series_titles (news/experience). El PNG del usuario se conserva sin redibujar ni
+recolorear y se coloca sobre una tarjeta blanca. Vive fuera de Git, en una ruta
+accesible para macOS; no depender de Descargas protegidas. Si falta el logo, el
+trabajo queda fallido en vez de fingir una versión terminada. El hash del logo
+forma parte de la identidad del render para detectar cambios de marca.
+
+Masterización de voz: filtro de graves a 70 Hz, compresión ligera 1.8:1, medición
+y normalización EBU R128 en dos pasadas a -16 LUFS con techo de -1.5 dBTP. Se mide
+de nuevo el AAC final; se rechaza si se desvía más de 1 LU o supera -1 dBTP.
+Son objetivos de este preset, no una garantía de volumen idéntico en todo teléfono.
+`audio-mastering.json` conserva los valores medidos; `manifest.json` guarda las
+fases y su número de fotogramas. La voz no se vuelve a generar si sigue en caché.

@@ -8,6 +8,13 @@ No invoques el renderizador ni otro agente: el padre lo hace una vez y mantiene
 el estado del video separado del éxito del artículo. No subas medios a TikTok ni
 Metricool; no simules que la conexión o una publicación existen.
 
+Estructura común: primera escena es un gancho breve (una o dos frases), luego el
+padre inserta una intro visual de un segundo con el logo. El resto desarrolla el
+contenido. El padre muestra el logo y «Comparte» sobre los últimos segundos de la
+voz. No agregues música, efectos ni una despedida hablada extra.
+Incluye series_title="Noticias de tecnología" para noticias o "Experiencias con IA"
+para relatos personales; el título del tema va en los gráficos de contenido.
+
 Guion de 40–180 palabras, objetivo 40–60 s: hecho relevante, qué cambia, un dato
 con sus límites y una pregunta concreta al público. Sin relleno, dramatización,
 promesas de rendimiento, voz imitada ni música. Cada chunk es una frase corta
