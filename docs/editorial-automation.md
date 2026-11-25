@@ -5,63 +5,68 @@ las credenciales y los logs permanecen en una carpeta privada externa al reposit
 La fuente activa es Claude local. Una fuente retirada puede conservar su archivo
 histórico en `archived_sources`, sin conexión de red ni fingir actividad reciente.
 
-## Ejecución en la Mac
+## Ciclos experimentales en la Mac
 
-El LaunchAgent `com.datogedon.editorial-daily` llama a `editorial/runtime.py` a las
-13:00, America/Guatemala. `RunAtLoad` permite recuperar una ejecución al iniciar
-sesión después de esa hora. Antes de las 13:00 no genera contenido. Un registro
-privado de éxito diario impide repetir el trabajo si se vuelve a lanzar el proceso.
-La Mac debe estar disponible para recolectar y redactar; no hay un agente en la nube
-con acceso a sus conversaciones. Las entradas ya programadas dependen del servidor.
+Desde v1.6 el planificador es `editorial/cycles.py`. Noticias: 06:00, 09:00 y
+11:00; experiencias: 13:00, 15:00 y 18:00, America/Guatemala. Cada ventana produce
+como máximo una entrada, tras verificar borrador, miniatura, enlaces y estado
+remoto. Publica al terminar el mismo ciclo/día; no reserva nuevos días futuros.
+Se conservan fechas y contenido de todas las entradas anteriores.
+
+La Mac debe estar despierta y conectada. RunAtLoad recupera solo la ventana reciente
+(75 min noticias, 120 min experiencias), nunca una ráfaga de ventanas perdidas.
+La generación no corre en el servidor; WP-Cron sigue publicando la cola anterior.
+Al acabar experiencias históricas viables, `catch_up=false` conserva solo 13:00.
+
+`private/cycles.json` registra un intento durable por ventana antes de escribir.
+Un bloqueo global evita solapamientos entre líneas. Un ciclo fallido/incierto no
+se repite automáticamente: revisar borradores e IDs antes de recuperación manual.
+El estado de éxito es por ciclo, no por día. El redactor tiene plazo de 45 minutos.
+Salud a las 07/10/12/14/16/19 con aviso local; no envía mensajes ni emails.
+
+Noticias usa estado separado en `news/`, búsqueda web en vivo y autor 135 Juan Pax;
+no recolecta sesiones privadas. Se exige contrastar fuentes originales e
+independientes, enlazarlas y guardar su revisión privada. Dos dominios distintos
+no equivalen a independencia: el redactor debe comprobarla. Temas inciertos,
+acusaciones y política controvertida quedan para revisión humana. Puede terminar
+sin noticia; una herramienta averiada nunca se registra como falta de noticias.
+Las experiencias conservan la anonimización y evidencia del trabajo humano/IA.
+
+## Enlaces internos
+
+`datogedon/find-related-posts` busca candidatos publicados, sin contraseña,
+indexables y con canonical propio. Devuelve título, URL, extracto y coincidencias.
+El mismo redactor lee el contenido completo antes de enlazar: coincidencias de
+palabras no bastan. Entre cero y tres enlaces descriptivos por entrada; no hay
+mínimo. No se modifican artículos anteriores para añadir enlaces inversos.
+
+`editorial/internal_links.py --post-id ID` comprueba destinos publicados, anclas,
+autorreferencias y duplicados sin reescribir HTML. El guardado MCP valida de nuevo
+indexabilidad al publicar. Relevancia semántica sigue siendo revisión editorial.
+
+## Publicación y autoría
+
+`datogedon/save-post` permite `draft`, `future` y publicar un borrador preparado.
+Noticias debe usar `kind=news`, `author=135` y `source_urls` citadas en el cuerpo.
+El servidor exige permisos, dos dominios fuente, miniatura WebP 1200x630 con alt
+<=180KB, extracto y categoría. No convierte un alta directa en publicación ni
+sobrescribe publicados: un reintento devuelve su ID inmutable. No se cambian roles,
+contraseñas ni slugs de autores. La biografía de Juan Pax identifica la firma
+editorial asistida por IA; no afirma una revisión humana que no haya ocurrido.
+
+El código se instala después de CI verde con:
 
 ```sh
-python3 editorial/runtime.py --state-dir /ruta/privada/editorial
-python3 editorial/runtime.py --state-dir /ruta/privada/editorial --health
+python3 editorial/install-mac.py --state-dir /ruta/privada --sha SHA_VERIFICADO
+python3 editorial/cycles.py --state-dir /ruta/privada --mode news
+python3 editorial/cycles.py --state-dir /ruta/privada --health
 ```
 
-El estado necesita `editorial-config.json`, `queue.json`, `DAILY-TASK.txt` basado
-en `editorial/task.txt` y el transporte MCP ya autorizado. Las credenciales locales
-existentes se leen de `~/.local/share/datogedon-mcp/credentials.json`; nunca se copian
-a Git ni se imprimen. Los logs se guardan con permisos 600 y la carpeta privada 700.
-
-El flujo conserva las fases existentes de redacción y escritura MCP:
-
-1. Recolecta muestras acotadas, sin inputs/resultados de herramientas ni razonamiento
-   interno. Redacta URLs, rutas, IPs y credenciales en la evidencia privada.
-2. Fusiona continuaciones por identidad, prefiriendo actividad reciente antes que
-   longitud de la muestra. Mantiene la procedencia y distingue el archivo retirado.
-3. Concilia la cola con WordPress por lectura REST, porque `ai/get-post-details`
-   no expone estado, fecha o miniatura. No cambia fechas ni textos remotos.
-4. Consulta todas las entradas futuras y las publicadas hoy. Reserva los primeros
-   horarios libres con margen de 30 minutos, sin superar dos entradas diarias.
-5. Codex usa el guion editorial, la evidencia y MCP para preparar borradores,
-   imágenes originales y programación. La revisión mantiene los títulos concretos,
-   la atribución de herramientas/modelos y la distinción de decisiones humanas/IA.
-6. `check-post.py` verifica borrador y programación. El padre vuelve a comprobar
-   estado, fecha, imágenes y calidad; salir con código cero no equivale a éxito.
-
-El modo de recuperación prepara hasta dos historias por ejecución. Al volver al
-ritmo de una diaria no se mueven las entradas que ya estuvieran programadas. Los
-horarios son de publicación (08:00/16:00), diferentes de la recolección a las 13:00.
-Las muestras sin evidencia suficiente quedan pendientes, sin inventar una historia.
-Los controles automáticos de forma no sustituyen la revisión narrativa y de privacidad.
-
-Una ejecución fallida conserva el progreso. El lock evita redactores simultáneos;
-el límite de 45 minutos termina también sus procesos hijos. No hay reintentos ciegos
-de publicación. `--force` se reserva a una ejecución manual deliberada; no se usa
-para repetir automáticamente un resultado incierto. El editorial_id estable evita
-crear otra entrada al reintentar la misma historia mediante MCP.
-
-## Comprobación y avisos
-
-`com.datogedon.editorial-health` ejecuta `--health` a las 14:00. Comprueba ejecución
-verificada del día, cola futura, fechas vencidas, miniaturas y metadatos. Un fallo
-solicita una notificación local, como máximo una por tipo y día. No envía emails ni
-mensajes externos. La presentación del aviso depende de los permisos de macOS.
-
-Consultar `daily-status.json`, `editorial-health.json`, `private/last-success.json`
-y `private/editorial-calendar.json` en el estado privado. Los registros publicados
-se marcan como tales localmente: una fecha antigua no queda eternamente «programada».
+Instalación guarda copia privada de configuración, plists y release anterior.
+Estado, colas, fuentes y credenciales permanecen fuera de Git. El transporte MCP
+solo usa la credencial local existente. Las imágenes usan herramientas disponibles
+sin contratar APIs; un diagrama original es alternativa al generador. No presentar
+ilustraciones generadas como fotografías documentales.
 
 ## Publicación en el servidor
 
@@ -91,7 +96,7 @@ base de datos para revertir esta configuración.
 
 ## Validación
 
-`python3 tests/editorial.py` usa únicamente datos sintéticos. Cubre privacidad,
+`python3 tests/editorial.py` y `tests/editorial-abilities.php` usan datos sintéticos. Cubre privacidad,
 frescura, archivo retirado, horarios, transición de cadencia, estado atómico,
 calidad, límite diario, idempotencia y salida cero con programación incorrecta.
 Las pruebas de orquestación simulan el redactor; la ejecución desatendida real del

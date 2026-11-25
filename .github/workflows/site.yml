@@ -54,6 +54,7 @@ jobs:
           php /tmp/wp theme activate datogedon-reader --path=/tmp/wordpress --quiet
           php /tmp/wp eval-file "$PWD/tests/seed.php" --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/tests/comments.php" --path=/tmp/wordpress
+          php /tmp/wp eval-file "$PWD/tests/editorial-abilities.php" --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/scripts/route-inventory.php" --path=/tmp/wordpress > /tmp/routes-before.json
           php /tmp/wp datogedon configure --owner=1 --path=/tmp/wordpress
           php /tmp/wp eval-file "$PWD/tests/comment-thread-fixture.php" --path=/tmp/wordpress

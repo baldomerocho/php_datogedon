@@ -1,0 +1,57 @@
+
+COMPROBACIONES COMUNES ANTES DE PUBLICAR:
+No invoques agentes adicionales ni el runtime/cycles desde dentro del redactor.
+Usa MCP Datogedon, inspecciona schemas actualizados con get-ability-info.
+Si MCP no aparece, usa el transporte HTTP local ya autorizado:
+python3 wp-mcp-transport.py prepare initialize
+curl -L --config private/wp-transport.curl --max-time 45 --silent --show-error
+python3 wp-mcp-transport.py result
+Para tools/list o tools/call, escribe JSON-RPC en archivo local, ejecuta
+python3 wp-mcp-transport.py prepare call archivo-json, repite curl y result.
+No leas/imprimas wp-transport.curl ni credenciales. Los nombres MCP son
+mcp-adapter-discover-abilities, mcp-adapter-get-ability-info y
+mcp-adapter-execute-ability. Solo destino datogedon.com. No cambies settings globales.
+Capacidades: datogedon/save-post (draft, future, publish; author, kind, source_urls),
+datogedon/upload-thumbnail y datogedon/find-related-posts.
+
+Usa categorías/etiquetas existentes de wordpress-taxonomies.json; prepara slug,
+extracto, título/descripción Rank Math y palabras clave pertinentes sin repetirlas.
+Cada artículo necesita miniatura propia relacionada WebP 1200x630 <=180 KB, alt
+realmente descriptivo y filename SEO. Si hay herramienta de generación integrada,
+sigue sus instrucciones; no inventes APIs/claves ni contrates servicios nuevos.
+Se autoriza usar Gemini/agy disponible para imágenes, pero no delegues agentes de
+texto. Si no existe generador accesible, crea un diagrama original SVG y rasteriza
+con rsvg-convert y cwebp. Ilustraciones generadas se identifican como ilustraciones,
+no como fotografías documentales. No imites la foto/composición de la fuente.
+Fotos gratuitas requieren verificar licencia exacta y crédito enlazado; el crédito
+no sustituye permiso. Usa imágenes interiores solo si ayudan a explicar.
+
+ENLAZADO INTERNO: antes de cerrar el borrador busca 2–4 conceptos concretos con
+find-related-posts; el catálogo private/internal-link-catalog.json permite descubrir
+artículos y evitar duplicados. Lee el CONTENIDO completo de los candidatos por REST
+público o su página antes de elegir. Relacionar solo porque comparten una palabra
+no basta. Añade entre cero y tres enlaces contextuales que amplíen una explicación;
+no impongas mínimo ni insertes enlaces en código, titulares o textos ya enlazados.
+Usa anclas descriptivas, variadas y naturales. Solo URLs canónicas reales de entradas
+publicadas/indexables; nunca al propio artículo, futuros, borradores o destinos
+repetidos. No reescribas el archivo antiguo para añadir enlaces inversos en este
+experimento. Registra target_id, ancla y razón editorial en el manifiesto privado.
+Verifica el borrador con:
+{{CHECK_POST}} --post-id ID --expect draft [--kind news SOLO para noticias]
+{{LINK_CHECK}} --post-id ID
+Todos los problemas deben resolverse ANTES de publicar. No ejecutes literalmente
+los corchetes; para experiencias omite --kind news.
+Después publica el borrador usando save-post status=publish, enviando TODOS los
+campos finales (incluidos author, kind, featured_media, categorías, extracto,
+metadatos SEO y source_urls en noticias). La publicación usa la hora real del sitio.
+Verifica de nuevo con --expect publish y el verificador de enlaces. Conserva la
+respuesta remota: el éxito del comando no sustituye verificar el post.
+Guarda inmediatamente post_id, editorial_id, cycle_key, status, fecha EXACTA devuelta
+por WordPress, miniatura y fuentes en queue.json/posts. No dejes fechas de borrador
+como fecha final; el conciliador debe poder confirmar la fecha sin modificarla.
+Save-post reutiliza editorial_id y no modifica entradas publicadas. Ante un envío
+incierto consulta su ID y estado; no crees otra clave ni reintentes a ciegas.
+Registra scheduled en daily-status.json/editorial por compatibilidad incluso si el
+estado final es published. No publiques sin imagen, verificación o evidencia.
+Si falla una herramienta, conserva borrador, ID y bloqueo. Resumen final breve en
+español, sin prompts, secretos ni datos privados.

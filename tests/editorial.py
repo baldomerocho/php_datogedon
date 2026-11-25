@@ -100,4 +100,71 @@ class Editorial(unittest.TestCase):
         posts=[{'status':'future','date':'2026-11-25T08:00:00'},{'status':'future','date':'2026-11-25T16:00:00'}]
         self.assertEqual(next_slots(posts,datetime(2026,11,24,14,tzinfo=TZ),False,1),['2026-11-26 08:00:00'])
 
+
+class Cycles(unittest.TestCase):
+    def test_independent_windows_and_no_missed_burst(self):
+        from cycles import due
+        current=datetime(2026,11,25,11,20,tzinfo=TZ)
+        self.assertTrue(due(current,'news')['key'].endswith('news:1100'))
+        self.assertIsNone(due(current,'experience'))
+        self.assertIsNone(due(datetime(2026,11,25,8,tzinfo=TZ),'news'))
+        self.assertIsNone(due(datetime(2026,11,25,5,59,tzinfo=TZ),'news'))
+    def test_three_experience_windows_and_normal_transition(self):
+        from cycles import due
+        for hour in [13,15,18]:self.assertTrue(due(datetime(2026,11,25,hour,tzinfo=TZ),'experience')['key'].endswith(str(hour)+'00'))
+        self.assertIsNone(due(datetime(2026,11,25,18,tzinfo=TZ),'experience',False))
+    def test_success_is_per_cycle_not_per_day(self):
+        from runtime import success_path
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            write(root/'private/cycle-context.json',{'key':'2026-11-25:news:0600'})
+            a=success_path(root)
+            write(root/'private/cycle-context.json',{'key':'2026-11-25:news:0900'})
+            self.assertNotEqual(a,success_path(root))
+    def test_attempt_is_durable_and_no_blind_retry(self):
+        from cycles import run
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);write(root/'editorial-config.json',{})
+            write(root/'private/cycles.json',{'2026-11-25:experience:1300':{'status':'failed'}})
+            with patch('cycles.now',return_value=datetime(2026,11,25,13,tzinfo=TZ)),patch('cycles.execute') as worker:
+                self.assertEqual(run(root,'experience')['stage'],'already_attempted');worker.assert_not_called()
+    def test_internal_audit_rejects_self_duplicates_and_unpublished(self):
+        from internal_links import audit
+        catalog=[{'id':1,'status':'publish','link':'https://datogedon.com/one/'},{'id':2,'status':'future','link':'https://datogedon.com/two/'}]
+        result=audit({'id':1,'content':{'raw':'<p><a href="/one/">Context</a><a href="/one/">More</a><a href="/two/">Future</a></p>'}},catalog)
+        self.assertEqual(len(result['problems']),4)
+    def test_no_internal_links_is_valid(self):
+        from internal_links import audit
+        self.assertEqual(audit({'id':1,'content':{'raw':'<p>Nothing relevant to link.</p>'}},[])['problems'],[])
+
+
+class NewsRuntime(unittest.TestCase):
+    def run_case(self,author):
+        from argparse import Namespace
+        from runtime import success_path
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);write(root/'editorial-config.json',{'publication_schedule':{'catch_up':True}});write(root/'queue.json',{'posts':[]})
+            write(root/'private/cycle-context.json',{'key':'2026-11-25:news:0600','mode':'news'})
+            (root/'NEWS-TASK.txt').write_text('Research news; {{CHECK_POST}}')
+            post={'id':22,'status':'publish','author':author,'date':'2026-11-25T06:20:00','featured_media':1,'categories':[1],'excerpt':{'raw':'Summary'},'content':{'raw':'<p>'+('fact '*100)+'</p>'}}
+            media={'mime_type':'image/webp','alt_text':'Diagram','media_details':{'width':1200,'height':630,'filesize':20000}}
+            class FakeWP:
+                def __init__(self,*a):pass
+                def get(self,path):
+                    if path=='posts/22?context=edit':return post,1
+                    if path.startswith('media/'):return media,1
+                    return [],1
+            class Writer:
+                returncode=0
+                def communicate(self,*a,**kw):pass
+            snapshots=[{'posts':[],'issues':[],'next_slots':[]},{'posts':[post],'issues':[]}]
+            args=Namespace(force=False,health=False,verify_only=False,collect_only=False,credentials=Path('unused'))
+            with patch('runtime.now',return_value=datetime(2026,11,25,6,20,tzinfo=TZ)),patch('runtime.collect') as collector,patch('runtime.WordPress',FakeWP),patch('runtime.reconcile',side_effect=snapshots),patch('runtime.shutil.which',return_value='/synthetic/codex'),patch('runtime.subprocess.Popen',return_value=Writer()) as worker,patch('runtime.notify'),contextlib.redirect_stdout(io.StringIO()):
+                result=execute(root,args)
+                collector.assert_not_called();self.assertIn('--search',worker.call_args.args[0])
+                self.assertEqual(result,0 if author==135 else 1)
+                self.assertEqual(success_path(root).exists(),author==135)
+    def test_news_publishes_same_day_without_private_collection(self):self.run_case(135)
+    def test_wrong_author_cannot_be_marked_success(self):self.run_case(1)
+
 if __name__=='__main__':unittest.main()
