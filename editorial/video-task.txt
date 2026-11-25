@@ -5,14 +5,14 @@ Usa SOLO el artículo ya público y sus fuentes verificadas, nunca conversacione
 ni evidencia original. No añadas afirmaciones que no estén en ese texto.
 El padre genera MP4 vertical con voz Gemini en español latino, gráficos y subtítulos.
 No invoques el renderizador ni otro agente: el padre lo hace una vez y mantiene
-el estado del video separado del éxito del artículo. No subas medios a TikTok ni
-Metricool desde este redactor: la publicación usa el Chrome autorizado en un paso
+el estado del video separado del éxito del artículo. No subas medios a TikTok,
+YouTube, Instagram ni Metricool desde este redactor: la publicación usa el Chrome autorizado en un paso
 separado. Noticias: publicar inmediatamente tras verificar que el artículo está
 público. Experiencias: programar a la fecha del post o después; nunca antes.
 Un post future requiere confirmación pública al llegar su fecha antes de publicar
 el video; si no se puede garantizar, conservarlo pendiente, no confiar solo en
 que WordPress cumplirá el horario. Evita duplicar videos ya publicados.
-No simules conexiones, publicación, programación ni URLs de TikTok. Después de
+No simules conexiones, publicación, programación ni URLs de ninguna plataforma. Después de
 confirmar video público se añade su referencia al MISMO artículo; los programados
 no se anuncian como disponibles. No crear entradas duplicadas para el video.
 
@@ -102,3 +102,17 @@ inventes retención de cuentas ajenas. Compara varias piezas de duración/tema s
 IDENTIDAD VISUAL: superficies, tipografía, separadores e intro/outro en escala
 de grises. El render aplica un acento puntual solo a una cifra o comparación clave;
 no llenar tarjetas de colores ni añadir color decorativo. Conservar logo original.
+
+DISTRIBUCIÓN EN TRES PLATAFORMAS:
+El maestro de voz se reutiliza como TikTok, YouTube Short e Instagram Reel; Facebook
+queda fuera. Añade destinations al plan privado: youtube={title,description},
+instagram={caption}, tiktok={caption}. YouTube: título directo <=100 caracteres,
+descripción con contexto, enlace real al artículo y declaración de voz sintética.
+Instagram: caption <=2200 caracteres; menciona el enlace del perfil solo si está
+verificado en la configuración local. No prometas que la URL del caption será
+clicable. Mantén hashtags pertinentes y no añadas afirmaciones al adaptar textos.
+No transportes música licenciada dentro de TikTok a otras plataformas: parte del
+maestro de voz y revisa cualquier música nativa por separado. El plan no demuestra
+una subida. La publicación y verificación por plataforma se describe en
+social-publication.txt, junto al runtime. Conserva estados e IDs independientes;
+una publicación en TikTok no implica éxito en YouTube o Instagram.

@@ -376,5 +376,18 @@ class VideoReference(unittest.TestCase):
         for url in ['https://www.tiktok.com/@other/video/123','https://www.tiktok.com/@datogedon/video/123?x=1','https://example.invalid/video/123']:
             with self.assertRaises(ValueError):self.reference('Original',url)
         with self.assertRaises(ValueError):self.reference('<!-- datogedon-video:start -->')
+    def test_cross_platform_references_preserve_each_other_and_sources(self):
+        body='<p>Original</p><h2>Fuentes</h2><p>Source</p>'
+        urls=['https://www.tiktok.com/@datogedon/video/12345','https://www.youtube.com/shorts/iug5hEtAbL0','https://www.instagram.com/datogedon/reel/DgLbn82IKew/']
+        for url in urls:body=self.reference(body,url)
+        for url in urls:
+            self.assertEqual(body.count(url),1)
+            self.assertEqual(self.reference(body,url),body)
+        self.assertTrue(body.endswith('<h2>Fuentes</h2><p>Source</p>'))
+    def test_reference_rejects_conflicting_video_and_host_spoofing(self):
+        body=self.reference('Original','https://www.youtube.com/shorts/iug5hEtAbL0')
+        for url in ['https://www.youtube.com/shorts/aaaaaaaaaaa','https://www.youtube.com.evil.test/shorts/iug5hEtAbL0','https://www.youtube.com/shorts/iug5hEtAbL0?x=1','https://www.instagram.com/other/reel/abc/']:
+            with self.assertRaises(ValueError):self.reference(body,url)
+        with self.assertRaises(ValueError):self.reference('<!-- datogedon-video:end --><!-- datogedon-video:start -->')
 
 if __name__=='__main__':unittest.main()

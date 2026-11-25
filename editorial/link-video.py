@@ -1,4 +1,4 @@
-"""Link a confirmed public TikTok video to its existing published article."""
+"""Link a confirmed public social video to its existing published article."""
 import argparse,hashlib,html,json,re
 from pathlib import Path
 from urllib.request import Request,urlopen
@@ -7,12 +7,29 @@ from runtime import WordPress,write,now
 START='<!-- datogedon-video:start -->'
 END='<!-- datogedon-video:end -->'
 
+def provider(url):
+    for name,pattern in [
+        ('TikTok',r'https://www\.tiktok\.com/@datogedon/video/[0-9]+'),
+        ('YouTube',r'https://www\.youtube\.com/shorts/[A-Za-z0-9_-]{11}'),
+        ('Instagram',r'https://www\.instagram\.com/datogedon/reel/[A-Za-z0-9_-]+/'),
+    ]:
+        if re.fullmatch(pattern,url):return name
+    raise ValueError('Expected a canonical Datogedon video URL; verify YouTube channel ownership separately')
+
 def reference(content,url):
-    if not re.fullmatch(r'https://www\.tiktok\.com/@datogedon/video/[0-9]+',url):
-        raise ValueError('Expected a public video URL belonging to @datogedon')
-    block=START+'\n<h2>Resumen en video</h2>\n<p><a href="'+html.escape(url,quote=True)+'">Ver el resumen en TikTok · @datogedon</a></p>\n'+END
+    name=provider(url);links={};existing=None
     if START in content or END in content:
         if content.count(START)!=1 or content.count(END)!=1:raise ValueError('Ambiguous video section')
+        existing=re.search(re.escape(START)+r'.*?'+re.escape(END),content,flags=re.S)
+        if not existing:raise ValueError('Invalid video section order')
+        for old in re.findall(r'<a\b[^>]*\bhref="([^"]+)"',existing.group(),flags=re.I):
+            old=html.unescape(old);old_name=provider(old)
+            if old_name in links and links[old_name]!=old:raise ValueError('Multiple videos for the same platform')
+            links[old_name]=old
+    if name in links and links[name]!=url:raise ValueError('A different video is already linked for this platform')
+    links[name]=url
+    block=START+'\n<h2>Resumen en video</h2>\n'+'\n'.join('<p><a href="'+html.escape(link,quote=True)+'">Ver el resumen en '+label+' · @datogedon</a></p>' for label,link in links.items())+'\n'+END
+    if existing:
         return re.sub(re.escape(START)+r'.*?'+re.escape(END),lambda _:block,content,flags=re.S)
     sources=re.search(r'<h2\b[^>]*>\s*Fuentes\s*</h2>',content,re.I)
     if sources:return content[:sources.start()]+block+'\n\n'+content[sources.start():]
@@ -22,7 +39,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--post-id',type=int,required=True);p.add_argument('--video-url',required=True)
     p.add_argument('--state-dir',type=Path,required=True)
-    p.add_argument('--confirmed-public',action='store_true',help='Operator verified the video in TikTok; not merely scheduled or processing')
+    p.add_argument('--confirmed-public',action='store_true',help='Operator verified public visibility and the Datogedon account/channel; not merely uploaded or scheduled')
     p.add_argument('--apply',action='store_true');a=p.parse_args()
     if not a.confirmed_public:p.error('Confirm the video is public before linking it')
     wp=WordPress(Path.home()/'.local/share/datogedon-mcp/credentials.json')

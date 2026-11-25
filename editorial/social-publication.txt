@@ -1,0 +1,59 @@
+PUBLICACIÓN SOCIAL DESDE EL CHROME DE DATOGEDON
+
+Este es el procedimiento del operador con navegador; no es un servicio de subida
+desatendida. El redactor prepara los textos y el padre renderiza; publicar es un
+paso separado. No anunciar automatización por horario sin ejecutor comprobado.
+
+Perfil y destinos
+El mapeo privado vive en ~/.local/share/datogedon-browser/accounts.json. Abrir con
+node ~/.local/share/datogedon-browser/open-datogedon.mjs URL...
+Ese lanzador verifica el perfil registrado antes de invocar el binario de Chrome.
+No usar new_page: la conexión automática puede abrirlo en otro perfil. No cambiar
+cuentas ajenas. Redescubrir pageId en cada sesión; no son identificadores estables.
+Confirmar identidad en la UI antes de cada subida: canal DATOGEDON y channel_id
+del mapeo para YouTube, navegación propia @datogedon para Instagram y TikTok.
+No copiar cookies, claves ni contraseñas. Facebook queda fuera de esta etapa.
+
+Elegibilidad y registro
+Usar video.mp4 maestro sin música de TikTok, cover.jpg, subtitles.srt y el plan de
+distribución existente. Confirmar el artículo publicado y su HTTP200. Noticias:
+publicación inmediata; experiencias: a la hora del artículo o después, confirmando
+que ya sea público. Si no hay programación fiable, mantener pendiente hasta poder
+comprobarlo; no adelantar el video. No reabrir piezas antiguas automáticamente
+sin revisar su vigencia y si ya tienen publicación en esa plataforma.
+Estado independiente en ~/claude-activity-audit/private/social-publication/status.json,
+posts[post_id][youtube|instagram]. TikTok conserva su registro existente. Antes de
+subir revisar registros y contenido remoto por título/artículo. Guardar ID remoto
+tan pronto se asigne, estado uploading/draft/publishing/published y URL real.
+Si una respuesta es incierta, conciliar el mismo video; nunca volver a subir a ciegas.
+
+YouTube Studio
+Subir el maestro al canal verificado. Adaptar título y descripción al tema; conservar
+fuentes/artículo y voz sintética. Español Latinoamérica, no creado para niños para
+estas noticias dirigidas a desarrolladores; revisar cada caso. Declarar uso de IA
+con la opción ofrecida y comprobar que quedó guardada. No cambiar los defaults del
+canal. Añadir subtitles.srt con tiempos si corresponde y comprobar su guardado.
+Esperar procesamiento y comprobaciones; elegir Público para noticia ya publicada,
+o programación elegible para experiencia. Verificar confirmación de publicación,
+URL /shorts/ID, canal, título y reproducción. Una URL asignada no prueba visibilidad.
+
+Instagram web
+Crear publicación con el maestro. Conservar recorte 9:16 y duración completa;
+Activar sonido debe permanecer encendido. Elegir cover.jpg como portada. Caption
+adaptado: contexto, fuente/artículo, hashtags y voz sintética; el perfil ya puede
+tener el enlace al blog, comprobarlo antes de mencionarlo. No modificar la bio sin
+necesidad. Activar etiqueta IA y comprobar checked/aria-checked: un click puede no
+cambiar el estado; no basta el éxito de click. No activar compartir en Facebook.
+Compartir una sola vez y esperar Reel compartido. Abrir la URL real desde el perfil
+y confirmar cuenta, caption, etiqueta y reproducción; si sigue procesando, registrar
+ese estado sin marcar publicado ni duplicar la carga.
+
+Referencia en el blog
+Solo después de confirmar público y cuenta/canal, ejecutar el helper con URL
+canónica (sin tracking) desde el código de editorial instalado:
+python3 link-video.py --post-id ID --video-url URL --state-dir ~/claude-activity-audit --confirmed-public --apply
+Acepta TikTok propio, YouTube /shorts/ID e Instagram /datogedon/reel/CODE/.
+YouTube exige confirmar el canal manualmente: la URL del Short no codifica autor.
+Conserva enlaces de las otras plataformas en el mismo artículo, fuentes y fechas.
+Un ID distinto para una plataforma ya enlazada requiere revisión; no sobrescribirlo.
+Revisar respuesta remota, guardar URL y estado en el registro y sidecar correspondiente.
