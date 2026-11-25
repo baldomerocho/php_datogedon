@@ -23,6 +23,8 @@ try {
     $output=datogedon_reader_toc_build($literal.$html);
     toc_assert(strpos($output,$literal)!==false,'Literal examples or scripts were rewritten.');
     toc_assert(strpos(datogedon_reader_toc_build($html),'data-datogedon-toc')===false,'Short article should not have an automatic index.');
+    $structured='<h2>Paso 1</h2><h2>Paso 2</h2><h3>Detalle</h3><h2>Paso 3</h2><h2>Paso 4</h2><h2>Paso 5</h2>';
+    toc_assert(strpos(datogedon_reader_toc_build($structured),'data-datogedon-toc')!==false,'Structured tutorials need an index even when code outweighs prose.');
     $long='<p>'.str_repeat('Un ejemplo legible para verificar el índice. ',85).'</p>'.$html;
     $output=datogedon_reader_toc_build($long);
     toc_assert(substr_count($output,'data-datogedon-toc')===1,'Long article must have exactly one index.');

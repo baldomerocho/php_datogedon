@@ -6,7 +6,9 @@ contenido. Se limita a la consulta principal de una entrada o página; se excluy
 extractos, archivos, feeds, administración y respuestas REST.
 
 Un artículo de al menos 500 palabras y tres encabezados H2/H3 recibe un índice
-contraído antes de su primera sección. El umbral evita ruido en noticias breves.
+contraído antes de su primera sección. También se incluye si tiene seis secciones
+o más: los tutoriales con mucho código pueden tener pocas palabras de prosa.
+El umbral evita ruido en noticias breves.
 La lista agrupa los H3 bajo el H2 correspondiente; encabezados H1/H4–H6 conservan
 anclas pero no se incluyen en la lista. `datogedon_reader_show_toc` permite ajustar
 la política. Las anclas se generan también cuando no se muestra el índice.

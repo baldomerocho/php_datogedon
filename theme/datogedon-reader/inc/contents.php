@@ -85,7 +85,7 @@ function datogedon_reader_toc_build($content) {
     $content=strtr($content,$protected);
     $words=preg_match_all('/[\p{L}\p{N}]+/u',wp_strip_all_tags($content));
     $threshold=max(2,min(20,(int)($attributes['start']??3)));
-    $show=!$disabled&&count($items)>=$threshold&&($forced||$words>=500);
+    $show=!$disabled&&count($items)>=$threshold&&($forced||$words>=500||count($items)>=6);
     $show=(bool)apply_filters('datogedon_reader_show_toc',$show,count($items),$words);
     $toc='';
     if($show && $items) {
