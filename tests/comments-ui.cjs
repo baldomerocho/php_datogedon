@@ -7,7 +7,7 @@ const assert=require('node:assert/strict');
  for(const width of [320,390,1440]){
   const page=await browser.newPage({viewport:{width,height:950},reducedMotion:'reduce'});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(target,{waitUntil:'domcontentloaded'});
+  await page.goto(target,{waitUntil:'networkidle'});
   const comments=page.locator('#comments');await comments.waitFor();
   assert.equal(await page.locator('.single-header .discussion-entry[href="#comments"]').count(),1);
   assert.ok((await comments.locator('.discussion-invitation').textContent()).includes('Tu experiencia también cuenta'));
