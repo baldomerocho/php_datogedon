@@ -217,6 +217,7 @@ def _locked(root,args,current,day,config,private):
         if not command:raise RuntimeError('Codex no está en PATH')
         prompt=(root/('NEWS-TASK.txt' if cycle.get('mode')=='news' else 'DAILY-TASK.txt')).read_text().replace('{{CHECK_POST}}',shlex.join([sys.executable,str(Path(__file__).with_name('check-post.py'))]))+('\nLee private/cycle-context.json: una entrada como máximo, publicación en este ciclo y fecha local de hoy; no reserves días futuros.\n' if cycle else '\nConsulta private/editorial-calendar.json; usa solo sus next_slots para nuevas entradas. No cambies fechas existentes.\n')
         prompt+='\n'+Path(__file__).with_name('common-task.txt').read_text().replace('{{CHECK_POST}}',shlex.join([sys.executable,str(Path(__file__).with_name('check-post.py'))])).replace('{{LINK_CHECK}}',shlex.join([sys.executable,str(Path(__file__).with_name('internal_links.py'))]))
+        if cycle and config.get('video',{}).get('enabled'):prompt+='\n'+Path(__file__).with_name('video-task.txt').read_text()
         from internal_links import catalog
         if cycle:write(private/'internal-link-catalog.json',catalog(wp))
         with (private/'worker.log').open('a') as log:
@@ -244,6 +245,14 @@ def _locked(root,args,current,day,config,private):
         if not new:
             reviewed=read(root/'queue.json').get('evidence_review',{}).get('reviewed_at','')
             if latest.get('status')!='no_story' or not latest.get('reason') or not reviewed or datetime.fromisoformat(reviewed)<datetime.fromisoformat(status['started_at']):raise RuntimeError('La ejecución terminó sin programación ni revisión nueva verificable')
+        if cycle and config.get('video',{}).get('enabled'):
+            from video import enqueue
+            jobs=[]
+            for summary in new:
+                try:jobs.append(enqueue(root,wp.get(f"posts/{summary['id']}?context=edit")[0],config['video']))
+                except Exception as error:jobs.append({'post_id':summary['id'],'status':'failed','error':type(error).__name__})
+            status['video_jobs']=[{k:j[k] for k in ['post_id','status'] if k in j} for j in jobs]
+            if any(j['status']!='ready_for_review' for j in jobs):notify(root,'video_pending','El artículo se publicó, pero su video requiere revisión técnica. No se subió a TikTok.')
         write(success_path(root),{'date':day,'verified_at':now().isoformat(),'post_ids':[p['id'] for p in new],'kind':'worker_verified' if new else 'reviewed_no_story'})
         status.update(stage='verified' if new else 'reviewed_no_story',status='ok',scheduled=new,worker_exit_code=0)
     except Exception as error:

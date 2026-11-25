@@ -40,7 +40,7 @@ def run(root,mode,health=False):
             for name in ['wp-mcp-transport.py']:
                 dest=work/name
                 if not dest.exists():dest.symlink_to(root/name)
-            write(work/'editorial-config.json',{'publication_schedule':{'catch_up':True}})
+            write(work/'editorial-config.json',{'publication_schedule':{'catch_up':True},'video':config.get('video',{})})
             if not (work/'queue.json').exists():write(work/'queue.json',{'posts':[],'evidence_review':{}})
             template=Path(__file__).with_name('news-task.txt').read_text()
             (work/'NEWS-TASK.txt').write_text(template);os.chmod(work/'NEWS-TASK.txt',0o600)

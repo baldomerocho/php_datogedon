@@ -1,0 +1,36 @@
+
+VIDEO LOCAL AUTORIZADO PARA @datogedon (NO SUBIR A TIKTOK):
+Después de publicar y verificar el artículo prepara private/video-brief-ID.json.
+Usa SOLO el artículo ya público y sus fuentes verificadas, nunca conversaciones
+ni evidencia original. No añadas afirmaciones que no estén en ese texto.
+El padre genera MP4 vertical con voz mexicana genérica, gráficos y subtítulos.
+No invoques el renderizador ni otro agente: el padre lo hace una vez y mantiene
+el estado del video separado del éxito del artículo. No subas medios a TikTok ni
+Metricool; no simules que la conexión o una publicación existen.
+
+Guion de 40–180 palabras, objetivo 40–60 s: hecho relevante, qué cambia, un dato
+con sus límites y una pregunta concreta al público. Sin relleno, dramatización,
+promesas de rendimiento, voz imitada ni música. Cada chunk es una frase corta
+<=155 caracteres, idealmente <=85 para subtítulos de dos líneas. Los gráficos
+no representan capturas ni hechos fotografiados. Nada de marcas de agua o URLs
+promocionales superpuestas; la referencia al artículo va en caption.
+
+JSON requerido:
+post_id (ID entero), account="@datogedon", article_url (permalink publicado),
+sources (lista de URLs públicas), topic_label (tema corto), date_label (fecha REAL
+del anuncio o experiencia, no fingir que ocurrió hoy), source_label (crédito corto),
+caption (descripción, fuentes/artículo y 3–4 hashtags pertinentes; indicar voz
+sintética), scenes (3–8 objetos con headline corto, visual, visual_data y chunks).
+
+Visuales disponibles, sin valores por defecto tomados de otra noticia:
+- context: visual_data={title,labels:[1–3 textos de hasta 22 caracteres]}.
+- comparison: visual_data={rows:[{label,main,detail},{label,main,detail}]}.
+- metric: visual_data={value,detail,scope,note}; solo cifras respaldadas por la
+  fuente, con denominador/contexto explícito. value<=10 caracteres, detail<=35.
+- question: visual_data={line1,line2,comparison,note}; frases muy breves.
+- parallel: visual_data={label,note}; esquema conceptual de dos vías, solo cuando
+  la historia justifica hablar de paralelismo, no para representar un speedup.
+Headlines de hasta 3 líneas, 6–8 palabras como máximo. Los campos de gráficos se
+pintan grandes: no incluyas párrafos. El redactor revisa la relevancia y veracidad;
+la validación mecánica no sustituye esa revisión. Si no hay resumen fiel o el tema
+requiere demasiados matices, deja constancia y conserva el artículo sin video.

@@ -167,4 +167,45 @@ class NewsRuntime(unittest.TestCase):
     def test_news_publishes_same_day_without_private_collection(self):self.run_case(135)
     def test_wrong_author_cannot_be_marked_success(self):self.run_case(1)
 
+
+class VideoDrafts(unittest.TestCase):
+    def brief(self):
+        return {'post_id':1,'account':'@datogedon','article_url':'https://datogedon.com/synthetic/','sources':['https://example.invalid/source'],'topic_label':'Synthetic technology','date_label':'Synthetic date','source_label':'Synthetic source','scenes':[{'headline':'A concise synthetic headline','visual':'context','visual_data':{'title':'Context','labels':['One','Two']},'chunks':['A synthetic description explaining a verified change and its scope without adding unsupported claims.']} for _ in range(3)]}
+    def test_real_video_brief_validates_without_external_runtime(self):
+        from video import validate
+        self.assertEqual(validate(self.brief())['post_id'],1)
+    def test_missing_visual_data_never_reuses_other_news_figures(self):
+        from video import validate
+        b=self.brief();b['scenes'][0]['visual_data']={}
+        with self.assertRaises(ValueError):validate(b)
+    def test_private_paths_are_not_exported_to_video(self):
+        from video import validate
+        b=self.brief();b['scenes'][0]['chunks'].append('/Users/example/private')
+        with self.assertRaises(ValueError):validate(b)
+    def test_subtitles_round_over_minute_boundary(self):
+        from video import timestamp
+        self.assertEqual(timestamp(59.9999),'00:01:00,000')
+        self.assertEqual(timestamp(59.9999,True),'0:01:00.00')
+    def test_missing_brief_is_durable_and_does_not_publish(self):
+        from video import enqueue
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);config={'state_dir':str(root/'state'),'output_dir':str(root/'output')}
+            post={'id':1,'status':'publish','slug':'synthetic','link':'https://datogedon.com/synthetic/'}
+            with patch('video.subprocess.Popen') as renderer:
+                job=enqueue(root,post,config);renderer.assert_not_called()
+            self.assertEqual(job['status'],'needs_brief');self.assertEqual(read(root/'state/queue.json')['jobs']['1']['status'],'needs_brief')
+    def test_unpublished_article_is_not_rendered(self):
+        from video import enqueue
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):enqueue(Path(d),{'id':1,'status':'draft'}, {})
+    def test_mismatched_brief_is_recorded_failed(self):
+        from video import enqueue
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);b=self.brief();b['post_id']=2;write(root/'private/video-brief-1.json',b)
+            config={'state_dir':str(root/'state'),'output_dir':str(root/'output')}
+            post={'id':1,'status':'publish','slug':'synthetic','link':'https://datogedon.com/synthetic/'}
+            with patch('video.subprocess.Popen') as renderer:
+                job=enqueue(root,post,config);renderer.assert_not_called()
+            self.assertEqual(job['status'],'failed');self.assertFalse(job['published'])
+
 if __name__=='__main__':unittest.main()
