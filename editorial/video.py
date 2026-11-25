@@ -116,16 +116,14 @@ def render(brief,output,tts_config,branding=None):
         text=c['text'].replace('\\','').replace('{','').replace('}','').replace('\n',' ')
         events.append(f"Dialogue: 0,{timestamp(c['start'],True)},{timestamp(c['end'],True)},Default,,0,0,0,,{text}")
     (output/'captions.ass').write_text(header+'\n'.join(events)+'\n')
-    concat='ffconcat version 1.0\n'+''.join(f"file '{s['file']}'\noption framerate 30\nduration {s['video_duration']:.9f}\n" for s in scenes)+f"file '{scenes[-1]['file']}'\noption framerate 30\n"
-    (output/'scenes.ffconcat').write_text(concat)
-    vf="fps=30,zoompan=z='1.005+0.003*sin(on/100)':d=1:s=1080x1920:fps=30,subtitles=captions.ass,format=yuv420p"
-    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','concat','-safe','0','-i','scenes.ffconcat','-i','narration-mastered.wav','-vf',vf,'-t',f'{cursor:.6f}','-frames:v',str(sum(s['frame_count'] for s in scenes)),'-c:v','libx264','-preset','veryfast','-crf','21','-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart','video.mp4'],cwd=output,check=True,timeout=300)
+    from video_motion import encode
+    motion=encode(output,scenes,{f'scene-{i:02}.png':scene['visual'] for i,scene in enumerate(brief['scenes'])})
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss','1','-i','video.mp4','-frames:v','1','cover.jpg'],cwd=output,check=True,timeout=30)
     encoded_video=verify_frames(output/'video.mp4',sum(s['frame_count'] for s in scenes))
     audio_report=verify_mastering(audio_report,output/'video.mp4');(output/'audio-mastering.json').write_text(json.dumps(audio_report,indent=2))
     (output/'caption.txt').write_text(brief['caption']+'\n')
     digest=hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()
-    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
+    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'motion':motion,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
@@ -151,7 +149,7 @@ def enqueue(root,post,config):
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};write(queue_path,queue);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':3},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':4},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}

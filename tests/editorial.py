@@ -327,4 +327,15 @@ class VideoFinishing(unittest.TestCase):
             with patch('video_finish.measure',return_value=values):
                 with self.assertRaises(RuntimeError):verify_mastering({},'synthetic.mp4')
 
+class VideoMotion(unittest.TestCase):
+    def test_entrances_wait_for_their_stagger_and_settle(self):
+        from video_motion import progress
+        self.assertEqual(progress(-1,.2,.4),0)
+        self.assertEqual(progress(.2,.2,.4),0)
+        self.assertAlmostEqual(progress(.6,.2,.4),1)
+        self.assertEqual(progress(10,.2,.4),1)
+        values=[progress(t/30,.2,.4) for t in range(31)]
+        self.assertEqual(values,sorted(values))
+        with self.assertRaises(ValueError):progress(1,0,0)
+
 if __name__=='__main__':unittest.main()

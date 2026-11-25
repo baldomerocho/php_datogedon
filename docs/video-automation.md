@@ -73,3 +73,16 @@ de nuevo el AAC final; se rechaza si se desvía más de 1 LU o supera -1 dBTP.
 Son objetivos de este preset, no una garantía de volumen idéntico en todo teléfono.
 `audio-mastering.json` conserva los valores medidos; `manifest.json` guarda las
 fases y su número de fotogramas. La voz no se vuelve a generar si sigue en caché.
+
+
+Las entradas se componen con Pillow y se envían como fotogramas RGB a FFmpeg;
+no requieren Remotion, navegador ni servicios de generación adicionales. Títulos
+y paneles entran con desplazamiento corto y opacidad; comparaciones, bloques y
+etiquetas se escalonan. Cifras y conclusiones reciben un pulso suave de escala,
+sin alterar sus valores ni animar contadores que puedan confundirse con mediciones.
+El contexto y la fuente permanecen en pantalla. Cada escena se estabiliza antes
+de 1,05 segundos y luego permanece quieta para leer. Los bumpers conservan sus
+30 fotogramas de intro y la duración de outro, con entradas más rápidas.
+`manifest.json.motion` identifica el preset y la revisión del render invalida
+los videos anteriores de la cola. La salida se valida por fotogramas del stream,
+no solamente por la duración del contenedor.
