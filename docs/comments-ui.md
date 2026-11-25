@@ -4,7 +4,9 @@ La conversación usa el walker nativo de WordPress con listas sin numeración.
 Cada respuesta identifica a su comentario padre y conserva los anclajes
 `comment-ID` y `div-comment-ID`, el orden, la paginación y la moderación.
 
-Las tarjetas agrupan avatar, nombre y fecha. Cada respuesta tiene un conector
+Las tarjetas agrupan avatar, nombre y fecha con bordes suaves y jerarquía tipográfica.
+La referencia al padre y el nivel aparecen como metadatos discretos bajo el nombre;
+en escritorio, la fecha queda alineada a la derecha. Cada respuesta tiene un conector
 que termina junto al avatar, identifica al comentario padre por su nombre y muestra
 su nivel explícito (la primera respuesta es nivel 1). Cada nivel conserva su
 sangría: 32 px en escritorio y 16 px en móvil, sin aplanar niveles profundos. Los listados numerados escritos dentro de un comentario

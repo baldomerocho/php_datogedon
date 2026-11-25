@@ -11,9 +11,8 @@ $asterisk=$required?' <span aria-hidden="true">*</span>':'';
     <header class="comments-heading">
         <div>
             <h2 id="comments-heading">Comentarios <span class="comments-count"><?php echo esc_html(number_format_i18n($count)); ?></span></h2>
-            <?php if(comments_open()): ?><p>Comparte tu experiencia o plantea una pregunta.</p><?php endif; ?>
         </div>
-        <?php if(comments_open()): ?><a class="comment-jump" href="#respond">Escribir un comentario <span aria-hidden="true">↓</span></a><?php endif; ?>
+        <?php if(comments_open()): ?><a class="comment-jump" href="#respond">Comentar <span aria-hidden="true">↗</span></a><?php endif; ?>
     </header>
     <?php if(have_comments()): ?>
         <ul class="comment-list" role="list">

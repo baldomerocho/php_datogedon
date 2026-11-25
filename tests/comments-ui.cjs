@@ -18,8 +18,8 @@ const assert=require('node:assert/strict');
   assert.equal(await comments.locator('.comment-author .says').count(),0);
   if(!process.env.COMMENTS_URL || process.env.COMMENTS_FIXTURE==='1'){
    assert.ok(await comments.locator('.depth-5').count()>0);
-   assert.equal(await comments.locator('.depth-3 > .comment-body .comment-level').innerText(),'Respuesta · nivel 2');
-   assert.equal(await comments.locator('.depth-4 > .comment-body .comment-level').innerText(),'Respuesta · nivel 3');
+   assert.equal(await comments.locator('.depth-3 > .comment-body .comment-level').innerText(),'Nivel 2');
+   assert.equal(await comments.locator('.depth-4 > .comment-body .comment-level').innerText(),'Nivel 3');
    const lefts=await comments.locator('.depth-2 > .comment-body,.depth-3 > .comment-body,.depth-4 > .comment-body').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().left));
    assert.ok(lefts[0]<lefts[1] && lefts[1]<lefts[2],'Every response level must remain visually distinct');
    assert.ok(await comments.locator('.comment-author-badge').count()>0);
