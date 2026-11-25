@@ -18,8 +18,48 @@ Anonimiza clientes, proyectos, personas, dominios privados, rutas, identificador
 datos reales y credenciales. No conectes al servidor retirado; archived_only no es
 actividad reciente. No presentes un trabajo histórico como realizado hoy.
 
-Prepara como máximo UNA historia en este ciclo. 400–650 palabras, títulos directos
-sobre el problema o la solución; sin metáforas ni «con IA» repetido mecánicamente.
+CRITERIO EDITORIAL PARA EXPERIENCIAS:
+El lector debe entender cuándo aplicar la estrategia, por qué funciona y qué
+debe comprobar en su propio entorno. Conserva la historia como hilo conductor,
+concentrada en los momentos que cambiaron la solución; elimina intercambios y
+cronología que no expliquen una decisión. Aumenta profundidad, no jerga ni relleno.
+Organiza el artículo con subtítulos específicos del caso, sin imponer una plantilla
+visible idéntica. Desarrolla estas piezas en el orden que facilite comprenderlo:
+- Problema y señal: objetivo, condiciones humanas, síntoma observado y evidencia
+  que motivó investigar o cambiar de rumbo. Distingue síntomas de hipótesis.
+- Decisión y estrategia: qué se eligió, cuándo y con qué información. Explica las
+  alternativas documentadas y el criterio de elección, incluidos sus costos o
+  límites relevantes. No inventes opciones evaluadas ni deliberaciones históricas.
+- Mecanismo: explica cómo funciona la solución y por qué responde al síntoma;
+  muestra la cadena causal, los pasos o estados importantes y las condiciones
+  necesarias. Nombrar una herramienta o afirmar que se corrigió no basta.
+- Colaboración: destaca las decisiones autónomas de la IA, el supuesto detrás de
+  ellas cuando esté documentado y cómo condicionaron decisiones posteriores.
+  Cuenta qué aceptó, corrigió o restringió el humano y cómo cambió el resultado.
+- Verificación: resultado comprobado, comparación antes/después si existe y
+  límites o pendientes. No conviertas un reporte del asistente en prueba propia.
+- Aplicación práctica: deja una estrategia, comprobación o criterio concreto
+  transferible y explica cuándo podría convenir otro camino. Evita moralejas vagas.
+Explica términos especializados al introducirlos. Usa un esquema, una tabla breve
+o un fragmento mínimo de código solo cuando aclare el mecanismo; no hace falta
+convertir cada experiencia en un tutorial completo. Conserva la anonimización.
+Código, comandos y mediciones históricos requieren evidencia. Un ejemplo nuevo
+debe identificarse como ilustrativo, ser técnicamente contrastado y no atribuirse
+a la implementación original. No reconstruyas código privado ni completes huecos
+con detalles plausibles. La explicación técnica de por qué algo funciona no prueba
+que ese haya sido el motivo del asistente: distingue hechos, reportes e interpretación.
+Registra en el manifiesto privado la evidencia de las decisiones centrales y qué
+parte es explicación editorial. Agrupa los límites de evidencia en un párrafo breve
+donde sea útil, sin repetirlos en cada sección ni borrar incertidumbres relevantes.
+Si falta evidencia para explicar el mecanismo central, busca corroboración en las
+fuentes locales autorizadas; si sigue siendo insuficiente, conserva la historia
+pendiente en lugar de publicar una explicación superficial o inventada.
+
+Prepara como máximo UNA historia en este ciclo. Orientación: 500–900 palabras;
+un caso sencillo puede ser más corto y uno complejo puede necesitar más espacio.
+La extensión responde a lo que hay que explicar, nunca a una cuota de palabras.
+Títulos directos sobre el problema o la solución; sin metáforas ni «con IA» repetido
+mecánicamente.
 Conserva el autor de las experiencias anteriores; NO uses el autor de noticias 135.
 Crea borrador, verifica, publica inmediatamente en el mismo ciclo y día local,
 con kind="experience". No reserves días futuros. NO modifiques ni adelantes
