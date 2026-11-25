@@ -160,3 +160,14 @@ conservando título, slug y fecha de publicación. No se crea otro post ni una U
 vacía para el video programado. Por ahora la referencia es un enlace ligero:
 no añade reproductores ni scripts de terceros al cargar la página. Una futura
 biblioteca de videos podrá reutilizar estas relaciones sin duplicar artículos.
+
+
+### Noticias y paleta de video
+
+La habilidad editorial añade la etiqueta `Noticias` (`noticias`) a `kind=news`,
+conservando las otras etiquetas y categorías. También se clasifica el archivo
+previo de noticias, sin cambiar URLs ni fechas.
+
+Renderer v5: fondos, paneles, texto e intro/outro neutros. El acento se limita a
+la cifra o comparación central; la etiqueta de tema y el progreso son grises.
+Se conserva el logo y el mastering. Los maestros ya aprobados no se reeditan.

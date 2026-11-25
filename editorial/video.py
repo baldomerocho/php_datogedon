@@ -33,17 +33,17 @@ def timestamp(seconds,ass=False):
 
 def card(scene,index,total,brief,path):
     from PIL import Image,ImageDraw,ImageFont
-    im=Image.new('RGB',(1080,1920),'#111820');d=ImageDraw.Draw(im)
-    d.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#19252e')
+    im=Image.new('RGB',(1080,1920),'#111111');d=ImageDraw.Draw(im)
+    d.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#191919')
     regular='/System/Library/Fonts/Supplemental/Arial.ttf';bold='/System/Library/Fonts/Supplemental/Arial Bold.ttf'
     font=lambda size,b=False:ImageFont.truetype(bold if b else regular,size)
-    white='#fff8ed';orange='#ff966f';muted='#b9c6ce';panel='#202e38';stroke='#3c505c'
+    white='#fafafa';orange='#ff966f';muted='#bdbdbd';panel='#242424';stroke='#505050'
     def centered(text,y,size=40,color=white,b=False):
         f=font(size,b);w=d.textlength(text,font=f)
         while w>740 and size>22:size-=2;f=font(size,b);w=d.textlength(text,font=f)
         if w>740:raise ValueError('Graphic label overflows safe area')
         d.text(((960-w)/2,y),text,font=f,fill=color)
-    d.text((90,145),brief['topic_label'],font=font(26,True),fill=orange)
+    d.text((90,145),brief['topic_label'],font=font(26,True),fill=muted)
     d.text((90,190),brief['date_label'],font=font(24),fill=muted)
     lines=[]
     for word in scene['headline'].split():
@@ -56,28 +56,28 @@ def card(scene,index,total,brief,path):
     d.rounded_rectangle((90,620,880,1070),radius=30,fill=panel,outline=stroke,width=2)
     visual=scene['visual'];data=scene['visual_data']
     if visual=='parallel':
-        d.text((130,665),data['label'],font=font(28,True),fill=orange)
+        d.text((130,665),data['label'],font=font(28,True),fill=white)
         for row in range(2):
             y=755+row*102
             for col in range(4):
-                x=135+col*178;d.rounded_rectangle((x,y,x+145,y+65),radius=12,fill=orange if row==0 else '#d8e4d5')
+                x=135+col*178;d.rounded_rectangle((x,y,x+145,y+65),radius=12,fill=orange if row==0 else '#dddddd')
         d.text((130,990),data['note'],font=font(24),fill=muted)
     elif visual=='comparison':
-        for n,(label,main,detail,color) in enumerate([(row['label'],row['main'],row['detail'],orange if i==0 else white) for i,row in enumerate(data['rows'])]):
+        for n,(label,main,detail,color) in enumerate([(row['label'],row['main'],row['detail'],white) for i,row in enumerate(data['rows'])]):
             y=650+n*195;d.text((130,y),label,font=font(25,True),fill=color);d.text((130,y+38),main,font=font(63,True),fill=color);d.text((130,y+112),detail,font=font(26),fill=muted)
     elif visual=='metric':
         centered(data['value'],680,124,orange,True);centered(data['detail'],842,34);centered(data['scope'],929,27,muted,True)
         centered(data['note'],1002,25,muted)
     elif visual=='context':
-        centered(data['title'],673,48,orange,True)
+        centered(data['title'],673,48,white,True)
         for n,label in enumerate(data['labels']):
-            y=765+n*87;d.rounded_rectangle((135,y,835,y+65),radius=12,fill='#293b47');centered(label,y+13,31)
+            y=765+n*87;d.rounded_rectangle((135,y,835,y+65),radius=12,fill='#303030');centered(label,y+13,31)
     else:
         centered(data['line1'],690,43,white,True);centered(data['line2'],770,43,white,True);centered(data['comparison'],893,52,orange,True);centered(data['note'],994,27,muted)
     d.text((90,1120),brief['source_label'],font=font(24),fill=muted)
     d.line((90,1175,880,1175),fill=stroke,width=3)
     width=790/total
-    for n in range(total):d.rectangle((90+n*width,1173,90+(n+1)*width-9,1179),fill=orange if n<=index else stroke)
+    for n in range(total):d.rectangle((90+n*width,1173,90+(n+1)*width-9,1179),fill=white if n<=index else stroke)
     im.save(path)
 
 def render(brief,output,tts_config,branding=None):
@@ -110,7 +110,7 @@ def render(brief,output,tts_config,branding=None):
     audio_report=master(output/'narration.wav',output/'narration-mastered.wav')
     srt='\n\n'.join(f"{i+1}\n{timestamp(c['start'])} --> {timestamp(c['end'])}\n{c['text']}" for i,c in enumerate(chunks))+'\n'
     (output/'subtitles.srt').write_text(srt)
-    header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Arial,48,&H00FFFFFF,&H00FFFFFF,&HCC111820,&HCC111820,0,0,0,0,100,100,0,0,3,13,0,2,100,180,460,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
+    header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Arial,48,&H00FFFFFF,&H00FFFFFF,&HCC111111,&HCC111111,0,0,0,0,100,100,0,0,3,13,0,2,100,180,460,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
     events=[]
     for c in chunks:
         text=c['text'].replace('\\','').replace('{','').replace('}','').replace('\n',' ')
@@ -123,7 +123,7 @@ def render(brief,output,tts_config,branding=None):
     audio_report=verify_mastering(audio_report,output/'video.mp4');(output/'audio-mastering.json').write_text(json.dumps(audio_report,indent=2))
     (output/'caption.txt').write_text(brief['caption']+'\n')
     digest=hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()
-    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'motion':motion,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
+    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'palette':{'name':'datogedon-grayscale-v1','surfaces':'grayscale','accent':'#ff966f','accent_usage':'key_metric_or_comparison_only'},'motion':motion,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
@@ -149,7 +149,7 @@ def enqueue(root,post,config):
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};write(queue_path,queue);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':4},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':5},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}

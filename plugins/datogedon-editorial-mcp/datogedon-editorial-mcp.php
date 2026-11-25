@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Datogedon Editorial MCP
  * Description: Capacidades MCP para borradores, programación y miniaturas del diario de desarrollo.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires at least: 6.9
  * Requires PHP: 8.0
  * Requires Plugins: mcp-adapter
@@ -107,6 +107,13 @@ add_action('wp_abilities_api_init', function () {
             if(isset($p['source_urls']))update_post_meta($id,'_datogedon_source_urls',array_map('esc_url_raw',$p['source_urls']));
             if (isset($p['featured_media'])) set_post_thumbnail($id, $p['featured_media']);
             foreach (['categories' => 'category','tags' => 'post_tag'] as $field => $taxonomy) if (isset($p[$field])) wp_set_post_terms($id, array_map('intval',$p[$field]),$taxonomy);
+            if ($kind==='news') {
+                $news_tag=term_exists('noticias','post_tag');
+                if (!$news_tag)$news_tag=wp_insert_term('Noticias','post_tag',['slug'=>'noticias']);
+                if(is_wp_error($news_tag))return $news_tag;
+                $assigned=wp_set_post_terms($id,[(int)$news_tag['term_id']],'post_tag',true);
+                if(is_wp_error($assigned))return $assigned;
+            }
             foreach (['seo_title' => 'rank_math_title','seo_description' => 'rank_math_description','focus_keyword' => 'rank_math_focus_keyword'] as $field => $meta) if (isset($p[$field])) update_post_meta($id,$meta,sanitize_text_field($p[$field]));
             return ['id' => $id, 'status' => get_post_status($id), 'date' => get_post_field('post_date',$id), 'url' => get_permalink($id), 'timezone' => wp_timezone_string()];
         },

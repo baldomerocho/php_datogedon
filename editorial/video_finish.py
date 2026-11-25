@@ -15,8 +15,8 @@ def branding_spec(config):
 
 def brand_card(config,brief,path,outro=False):
     from PIL import Image,ImageDraw,ImageFont,ImageOps
-    image=Image.new('RGB',(1080,1920),'#111820');draw=ImageDraw.Draw(image)
-    draw.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#19252e')
+    image=Image.new('RGB',(1080,1920),'#111111');draw=ImageDraw.Draw(image)
+    draw.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#191919')
     draw.rounded_rectangle((150,330,810,990),radius=34,fill='white')
     logo=Image.open(config['logo_path']).convert('RGBA');logo=ImageOps.contain(logo,(610,610),Image.Resampling.LANCZOS)
     image.paste(logo,(480-logo.width//2,660-logo.height//2),logo)
@@ -28,8 +28,8 @@ def brand_card(config,brief,path,outro=False):
         if lines and draw.textlength(lines[-1]+' '+word,font=font)<=790:lines[-1]+=' '+word
         else:lines.append(word)
     if len(lines)>2 or any(draw.textlength(line,font=font)>790 for line in lines):raise ValueError('Brand title overflows safe area')
-    for n,line in enumerate(lines):draw.text((480-draw.textlength(line,font=font)/2,1090+n*94),line,font=font,fill='#fff8ed')
-    draw.line((300,1028,660,1028),fill='#ff966f',width=5)
+    for n,line in enumerate(lines):draw.text((480-draw.textlength(line,font=font)/2,1090+n*94),line,font=font,fill='#fafafa')
+    draw.line((300,1028,660,1028),fill='#bdbdbd',width=5)
     image.save(path)
 
 def outro_timeline(scenes,config):

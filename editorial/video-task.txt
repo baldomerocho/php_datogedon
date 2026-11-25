@@ -98,3 +98,7 @@ Para evaluar: fecha, país si disponible, duración, sonido/versión, ganancia,
 visualizaciones, tiempo medio, finalización, compartidos y seguidores obtenidos.
 Datos ausentes son null; no atribuyas causalidad a la música con un solo video ni
 inventes retención de cuentas ajenas. Compara varias piezas de duración/tema similares.
+
+IDENTIDAD VISUAL: superficies, tipografía, separadores e intro/outro en escala
+de grises. El render aplica un acento puntual solo a una cifra o comparación clave;
+no llenar tarjetas de colores ni añadir color decorativo. Conservar logo original.

@@ -11,8 +11,8 @@ def progress(time,delay,duration):
 
 def layers(image,visual,brand=False):
     from PIL import Image,ImageDraw
-    background=Image.new('RGB',image.size,'#111820');draw=ImageDraw.Draw(background)
-    draw.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#19252e')
+    background=Image.new('RGB',image.size,'#111111');draw=ImageDraw.Draw(background)
+    draw.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#191919')
     base=image.copy();items=[]
     def take(box,delay=0,duration=.32,shift=28,pulse=False,rounded=0):
         crop=image.crop(box).convert('RGBA')
@@ -36,7 +36,7 @@ def layers(image,visual,brand=False):
     for box,lag,pop in boxes:
         accent=image.crop(box).convert('RGBA')
         local=(box[0]-90,box[1]-620,box[2]-90,box[3]-620)
-        ImageDraw.Draw(panel).rectangle(local,fill='#202e38')
+        ImageDraw.Draw(panel).rectangle(local,fill='#242424')
         accents.append((accent,box[:2],lag,.38,18,pop))
     items.append((panel,position,delay,duration,shift,pulse));items.extend(accents)
     return base,items

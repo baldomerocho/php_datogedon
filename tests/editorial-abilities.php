@@ -20,7 +20,10 @@ try{
     if((int)get_post_field('post_author',$first['id'])!==135)throw new RuntimeException('News attribution missing');
     $bad=$payload;$bad['status']='publish';$bad['source_urls']=['https://example.invalid/one','https://example.invalid/two'];editorial_error($save->execute($bad),'missing_sources');
     $bad['source_urls']=['https://example.invalid/release','https://other.invalid/uncited'];editorial_error($save->execute($bad),'uncited_source');
+    if(!has_term('noticias','post_tag',$first['id']))throw new RuntimeException('News tag missing');
+    $payload['tags']=[]; // Explicitly empty tags must not remove the classification.
     $payload['status']='publish';$published=editorial_ok($save->execute($payload));if($published['status']!=='publish')throw new RuntimeException('Immediate publication failed');
+    if(!has_term('noticias','post_tag',$published['id']))throw new RuntimeException('News tag lost on publication');
     $copy=$payload;$copy['content']='Must not overwrite published news';$retry=editorial_ok($save->execute($copy));
     if(empty($retry['immutable'])||get_post_field('post_content',$published['id'])===$copy['content'])throw new RuntimeException('Published content was overwritten');
     $candidates=editorial_ok($find->execute(['query'=>'Quasar compiler']));if(!in_array($first['id'],array_column($candidates['candidates'],'id'),true))throw new RuntimeException('Published candidate missing');
