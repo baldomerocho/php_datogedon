@@ -3,7 +3,7 @@ VIDEO LOCAL AUTORIZADO PARA @datogedon (NO SUBIR A TIKTOK):
 Después de publicar y verificar el artículo prepara private/video-brief-ID.json.
 Usa SOLO el artículo ya público y sus fuentes verificadas, nunca conversaciones
 ni evidencia original. No añadas afirmaciones que no estén en ese texto.
-El padre genera MP4 vertical con voz mexicana genérica, gráficos y subtítulos.
+El padre genera MP4 vertical con voz Gemini en español latino, gráficos y subtítulos.
 No invoques el renderizador ni otro agente: el padre lo hace una vez y mantiene
 el estado del video separado del éxito del artículo. No subas medios a TikTok ni
 Metricool; no simules que la conexión o una publicación existen.
@@ -11,7 +11,9 @@ Metricool; no simules que la conexión o una publicación existen.
 Guion de 40–180 palabras, objetivo 40–60 s: hecho relevante, qué cambia, un dato
 con sus límites y una pregunta concreta al público. Sin relleno, dramatización,
 promesas de rendimiento, voz imitada ni música. Cada chunk es una frase corta
-<=155 caracteres, idealmente <=85 para subtítulos de dos líneas. Los gráficos
+<=155 caracteres. Usa oraciones completas; no cortes una frase para ajustar
+subtítulos. Agrupa dos oraciones cortas cuando quepan: mejora la prosodia y reduce
+llamadas de audio. El montaje mide cada fragmento y adapta los subtítulos. Los gráficos
 no representan capturas ni hechos fotografiados. Nada de marcas de agua o URLs
 promocionales superpuestas; la referencia al artículo va en caption.
 

@@ -208,4 +208,75 @@ class VideoDrafts(unittest.TestCase):
                 job=enqueue(root,post,config);renderer.assert_not_called()
             self.assertEqual(job['status'],'failed');self.assertFalse(job['published'])
 
+
+class GeminiAudio(unittest.TestCase):
+    def response(self):
+        import base64,wave
+        audio=io.BytesIO()
+        with wave.open(audio,'wb') as stream:
+            stream.setnchannels(1);stream.setsampwidth(2);stream.setframerate(24000);stream.writeframes(b'\0\0'*2400)
+        return {'steps':[{'type':'model_output','content':[{'type':'audio','data':base64.b64encode(audio.getvalue()).decode()}]}],'usage':{'total_tokens':12}}
+    def setup_client(self,directory):
+        from gemini_tts import GeminiSpeech
+        root=Path(directory);env=root/'voice.env';env.write_text('PUBLIC_APIKEY=primary-example\nAPIKEY=paid-example\n');env.chmod(0o600)
+        return GeminiSpeech({'env_file':str(env),'cache_dir':str(root/'cache')}),root
+    def test_primary_is_first_and_cache_avoids_repeat_charges(self):
+        with tempfile.TemporaryDirectory() as directory:
+            client,root=self.setup_client(directory)
+            with patch('gemini_tts.request',return_value=self.response()) as api:
+                client.synthesize('Synthetic speech.',root/'one.wav');client.synthesize('Synthetic speech.',root/'two.wav')
+                api.assert_called_once();self.assertEqual(api.call_args.args[1],'primary-example')
+            self.assertEqual((root/'one.wav').read_bytes(),(root/'two.wav').read_bytes());self.assertEqual(client.report()['cache_hits'],1)
+    def test_paid_only_after_primary_quota_and_sticky_for_this_render(self):
+        from gemini_tts import SpeechError
+        with tempfile.TemporaryDirectory() as directory:
+            client,root=self.setup_client(directory)
+            with patch('gemini_tts.request',side_effect=[SpeechError(429,'QUOTA_EXHAUSTED'),self.response(),self.response()]) as api:
+                client.synthesize('First sentence.',root/'one.wav');client.synthesize('Second sentence.',root/'two.wav')
+                self.assertEqual([c.args[1] for c in api.call_args_list],['primary-example','paid-example','paid-example'])
+            self.assertTrue(client.report()['paid_fallback_used'])
+    def test_brief_quota_delay_retries_primary_before_paying(self):
+        from gemini_tts import SpeechError
+        with tempfile.TemporaryDirectory() as directory:
+            client,root=self.setup_client(directory)
+            with patch('gemini_tts.time.sleep') as sleep,patch('gemini_tts.request',side_effect=[SpeechError(429,'QUOTA_EXHAUSTED',2),self.response()]) as api:
+                client.synthesize('Synthetic speech.',root/'one.wav');sleep.assert_called_once_with(2)
+                self.assertEqual([c.args[1] for c in api.call_args_list],['primary-example','primary-example'])
+            self.assertFalse(client.report()['paid_fallback_used'])
+    def test_nonquota_errors_do_not_use_paid_key(self):
+        from gemini_tts import SpeechError
+        for status in [400,401,403,404,500,503,0]:
+            with tempfile.TemporaryDirectory() as directory:
+                client,root=self.setup_client(directory)
+                with patch('gemini_tts.request',side_effect=SpeechError(status)) as api:
+                    with self.assertRaises(SpeechError):client.synthesize('Synthetic speech.',root/'one.wav')
+                    api.assert_called_once();self.assertEqual(api.call_args.args[1],'primary-example')
+    def test_paid_failure_does_not_retry_billable_generation(self):
+        from gemini_tts import SpeechError
+        with tempfile.TemporaryDirectory() as directory:
+            client,root=self.setup_client(directory)
+            with patch('gemini_tts.request',side_effect=[SpeechError(429),SpeechError(503)]) as api:
+                with self.assertRaises(SpeechError):client.synthesize('Synthetic speech.',root/'one.wav')
+                self.assertEqual(api.call_count,2)
+    def test_invalid_audio_is_not_cached_or_retried_with_paid(self):
+        from gemini_tts import SpeechError
+        with tempfile.TemporaryDirectory() as directory:
+            client,root=self.setup_client(directory)
+            with patch('gemini_tts.request',return_value={'steps':[]}) as api:
+                with self.assertRaises(SpeechError):client.synthesize('Synthetic speech.',root/'one.wav')
+                api.assert_called_once()
+            self.assertFalse((root/'one.wav').exists())
+    def test_error_and_usage_report_do_not_export_credentials(self):
+        from gemini_tts import SpeechError
+        with tempfile.TemporaryDirectory() as directory:
+            client,root=self.setup_client(directory)
+            with patch('gemini_tts.request',return_value=self.response()):client.synthesize('Synthetic speech.',root/'one.wav')
+            report=json.dumps(client.report())+str(SpeechError(429))
+            self.assertNotIn('primary-example',report);self.assertNotIn('paid-example',report)
+    def test_env_must_be_private(self):
+        from gemini_tts import credentials,SpeechError
+        with tempfile.TemporaryDirectory() as directory:
+            env=Path(directory)/'voice.env';env.write_text('PUBLIC_APIKEY=example');env.chmod(0o644)
+            with self.assertRaises(SpeechError):credentials(env)
+
 if __name__=='__main__':unittest.main()

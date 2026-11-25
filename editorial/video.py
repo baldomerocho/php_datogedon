@@ -80,16 +80,16 @@ def card(scene,index,total,brief,path):
     for n in range(total):d.rectangle((90+n*width,1173,90+(n+1)*width-9,1179),fill=orange if n<=index else stroke)
     im.save(path)
 
-def render(brief,output,model):
-    from piper import PiperVoice
+def render(brief,output,tts_config):
+    from gemini_tts import GeminiSpeech
     validate(brief);output.mkdir(parents=True,exist_ok=True)
-    voice=PiperVoice.load(str(model));chunks=[];cursor=0;sample_rate=None;audio_parts=[];scenes=[]
+    voice=GeminiSpeech(tts_config);chunks=[];cursor=0;sample_rate=None;audio_parts=[];scenes=[]
     for scene_index,scene in enumerate(brief['scenes']):
         image=output/f'scene-{scene_index:02}.png';card(scene,scene_index,len(brief['scenes']),brief,image)
         start=cursor
         for chunk_index,text in enumerate(scene['chunks']):
             wav=output/f'voice-{scene_index:02}-{chunk_index:02}.wav'
-            with wave.open(str(wav),'wb') as out:voice.synthesize_wav(text,out)
+            voice.synthesize(text,wav)
             with wave.open(str(wav),'rb') as stream:
                 if stream.getsampwidth()!=2 or stream.getnchannels()!=1:raise ValueError('Expected mono PCM16 speech')
                 if sample_rate is not None and stream.getframerate()!=sample_rate:raise ValueError('Inconsistent voice sample rate')
@@ -115,7 +115,8 @@ def render(brief,output,model):
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss','1','-i','video.mp4','-frames:v','1','cover.jpg'],cwd=output,check=True,timeout=30)
     (output/'caption.txt').write_text(brief['caption']+'\n')
     digest=hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()
-    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_model':model.name,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None}
+    manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None}
+    (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
 def enqueue(root,post,config):
@@ -132,15 +133,17 @@ def enqueue(root,post,config):
         if brief['post_id']!=post['id'] or brief.get('article_url')!=post['link']:raise ValueError('Brief belongs to a different article')
     except (ValueError,TypeError,KeyError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'InvalidBrief','updated_at':now().isoformat(),'published':False};write(queue_path,queue);return queue['jobs'][key]
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'renderer_version':2},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
-    if previous.get('status')=='ready_for_review' and previous.get('brief_sha256')==digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
-    job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'updated_at':now().isoformat(),'output':str(output),'published':False}
+    if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
+    job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}
     queue['jobs'][key]=job;write(queue_path,queue)
+    tts_config_path=state/'voice-config.json';write(tts_config_path,config['tts'])
     process=None
     try:
         with (state/f"render-{key}.log").open('a') as log:
             os.chmod(log.name,0o600)
-            process=subprocess.Popen([str(Path(config['python']).expanduser()),str(Path(__file__).resolve()),'--brief',str(brief_path),'--output',str(output),'--model',str(Path(config['model']).expanduser())],stdout=log,stderr=log,start_new_session=True)
+            process=subprocess.Popen([str(Path(config['python']).expanduser()),str(Path(__file__).resolve()),'--brief',str(brief_path),'--output',str(output),'--tts-config',str(tts_config_path)],stdout=log,stderr=log,start_new_session=True)
             process.wait(timeout=360)
         if process.returncode:raise RuntimeError('Local renderer failed')
         manifest=read(output/'manifest.json')
@@ -155,5 +158,5 @@ def enqueue(root,post,config):
     write(queue_path,queue);return job
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--brief',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--model',type=Path,required=True);a=p.parse_args()
-    render(json.loads(a.brief.read_text()),a.output.resolve(),a.model.resolve())
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--brief',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--tts-config',type=Path,required=True);a=p.parse_args()
+    render(json.loads(a.brief.read_text()),a.output.resolve(),json.loads(a.tts_config.read_text()))
