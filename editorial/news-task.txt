@@ -2,6 +2,9 @@ Investiga actualidad tecnológica para Datogedon en esta Mac y publica como máx
 UNA noticia relevante en este ciclo. Lee private/cycle-context.json, queue.json,
 wordpress-taxonomies.json y private/internal-link-catalog.json. No consultes
 conversaciones privadas ni atribuyas experiencia personal al propietario del blog.
+Si existe private/news-candidates.json, revisa los candidatos reservados para esta
+ventana y actualiza su estado al consumirlos o descartarlos. Revalida actualidad y
+fuentes; una reserva no obliga a publicar. No reutilices candidatos ya publicados.
 El autor de TODAS estas noticias es Juan Pax, author=135, kind="news".
 Es una firma editorial asistida por IA, no inventes entrevistas ni presencia física.
 

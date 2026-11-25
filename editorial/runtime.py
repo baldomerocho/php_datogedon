@@ -121,10 +121,11 @@ def reconcile(root,wp):
     calendar=wp.posts('future')+wp.posts('publish',day+'T00:00:00')
     config=read(root/'editorial-config.json');catch_up=config['publication_schedule']['catch_up']
     cycle=cycle_context(root)
-    slots=[] if cycle else next_slots(calendar,now(),catch_up,2 if catch_up else 1)
+    cyclic=bool(cycle or config.get('news_schedule'))
+    slots=[] if cyclic else next_slots(calendar,now(),catch_up,2 if catch_up else 1)
     counts=Counter(p['date'][:10] for p in calendar if p['status'] in ['publish','future'])
     # Preserve existing dates; report collisions rather than silently rescheduling them.
-    issues.extend({'date':d,'issue':'más publicaciones que el límite diario'} for d,c in counts.items() if c>2 and not cycle)
+    issues.extend({'date':d,'issue':'más publicaciones que el límite diario'} for d,c in counts.items() if c>2 and not cyclic)
     result={'checked_at':now().isoformat(),'posts':snapshot,'next_slots':slots,'calendar':calendar,'issues':issues,'cycle':cycle}
     write(root/'private/editorial-calendar.json',result);return result
 
