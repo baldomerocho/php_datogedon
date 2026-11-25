@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Datogedon Site
  * Description: Identidad, navegación y estructura editorial independientes del tema.
- * Version: 1.1.0
+ * Version: 1.2.0
  * License: GPL-2.0-or-later
  */
 defined('ABSPATH') || exit;
@@ -213,3 +213,50 @@ if (defined('WP_CLI') && WP_CLI) {
         WP_CLI::success('Estructura editorial configurada sin cambiar categorías ni permalinks de artículos.');
     });
 }
+
+/** Editorial discussion settings survive theme changes. */
+function datogedon_discussion_question($post_id) {
+    $custom=trim((string)get_post_meta($post_id,'_datogedon_discussion_question',true));
+    if($custom!=='')return $custom;
+    $slugs=wp_get_post_terms($post_id,'category',array('fields'=>'slugs'));
+    if(is_wp_error($slugs))$slugs=array();
+    if(array_intersect($slugs,array('experiencias-con-ia','inteligencia-artificial','ia')))
+        return '¿Qué decisión le dejarías a la IA y cuál revisarías tú? Comparte tu experiencia, aunque hayas llegado a otra conclusión.';
+    if(array_intersect($slugs,array('edicion-de-video','tutoriales','software')))
+        return '¿Qué probaste y qué resultado obtuviste? Comparte tu experiencia y la versión que utilizaste.';
+    return '¿Qué te ha funcionado a ti y qué harías diferente? Comparte tu experiencia o plantea una pregunta.';
+}
+function datogedon_featured_comment($post_id) {
+    $id=absint(get_post_meta($post_id,'_datogedon_featured_comment',true));
+    $comment=$id?get_comment($id):null;
+    return $comment && (int)$comment->comment_post_ID===(int)$post_id && (string)$comment->comment_approved==='1' && in_array($comment->comment_type,array('','comment'),true)?$comment:null;
+}
+add_action('add_meta_boxes_post',function(){
+    add_meta_box('datogedon-discussion','Conversación del artículo',function($post){
+        wp_nonce_field('datogedon_discussion','datogedon_discussion_nonce');
+        echo '<p><label for="datogedon-question">Pregunta para los lectores</label></p><textarea class="widefat" rows="3" id="datogedon-question" name="datogedon_question" maxlength="500">'.esc_textarea(get_post_meta($post->ID,'_datogedon_discussion_question',true)).'</textarea><p class="description">Si está vacía se usa una invitación según el tema. No cambia el contenido del artículo.</p>';
+        $selected=absint(get_post_meta($post->ID,'_datogedon_featured_comment',true));
+        $choices=get_comments(array('post_id'=>$post->ID,'status'=>'approve','type'=>'comment','number'=>100,'orderby'=>'comment_date_gmt','order'=>'DESC'));
+        $current=datogedon_featured_comment($post->ID);
+        if($current && !in_array($selected,array_map(function($c){return (int)$c->comment_ID;},$choices),true))array_unshift($choices,$current);
+        echo '<p><label for="datogedon-featured">Comentario destacado</label></p><select class="widefat" id="datogedon-featured" name="datogedon_featured"><option value="0">Sin destacado</option>';
+        foreach($choices as $choice)echo '<option value="'.(int)$choice->comment_ID.'"'.selected($selected,(int)$choice->comment_ID,false).'>'.esc_html(get_comment_author($choice).' — '.wp_trim_words(wp_strip_all_tags($choice->comment_content),12,'…')).'</option>';
+        echo '</select><p class="description">Selecciona entre los 100 comentarios aprobados más recientes de esta entrada. Elige aportaciones útiles, incluidas correcciones o desacuerdos.</p>';
+    },'post','normal');
+});
+add_action('save_post_post',function($id){
+    if(defined('DOING_AUTOSAVE') && DOING_AUTOSAVE || wp_is_post_revision($id) || !current_user_can('edit_post',$id))return;
+    if(!isset($_POST['datogedon_discussion_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['datogedon_discussion_nonce'])),'datogedon_discussion'))return;
+    if(isset($_POST['datogedon_question']))update_post_meta($id,'_datogedon_discussion_question',mb_substr(sanitize_textarea_field(wp_unslash($_POST['datogedon_question'])),0,500));
+    if(isset($_POST['datogedon_featured'])){
+        $candidate=absint($_POST['datogedon_featured']);$comment=$candidate?get_comment($candidate):null;
+        if(!$candidate || $comment && (int)$comment->comment_post_ID===$id && (string)$comment->comment_approved==='1')update_post_meta($id,'_datogedon_featured_comment',$candidate);
+    }
+});
+// A short-lived receipt records accepted submissions (including moderation), not their text.
+add_action('comment_post',function($id,$approved){
+    if(!in_array((string)$approved,array('0','1'),true) || headers_sent())return;
+    $comment=get_comment($id);
+    if(!$comment || !in_array($comment->comment_type,array('','comment'),true))return;
+    setcookie('datogedon_comment_received','1',array('expires'=>time()+120,'path'=>'/','secure'=>is_ssl(),'httponly'=>false,'samesite'=>'Lax'));
+},10,2);

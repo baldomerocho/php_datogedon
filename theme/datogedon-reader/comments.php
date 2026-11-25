@@ -14,12 +14,15 @@ $asterisk=$required?' <span aria-hidden="true">*</span>':'';
         </div>
         <?php if(comments_open()): ?><a class="comment-jump" href="#respond">Comentar <span aria-hidden="true">↗</span></a><?php endif; ?>
     </header>
-    <?php if(have_comments()): ?>
-        <ul class="comment-list" role="list">
-            <?php wp_list_comments(array('style'=>'ul','format'=>'html5','short_ping'=>true,'avatar_size'=>40,'callback'=>'datogedon_reader_comment')); ?>
-        </ul>
-        <?php the_comments_navigation(array('prev_text'=>'← Comentarios anteriores','next_text'=>'Comentarios siguientes →')); ?>
-        <?php if(!comments_open()): ?><p class="no-comments">Los comentarios están cerrados.</p><?php endif; ?>
+    <?php if(comments_open()): ?>
+    <div class="discussion-invitation"><span class="discussion-eyebrow">Tu experiencia también cuenta</span><p><?php echo esc_html(datogedon_discussion_question(get_the_ID())); ?></p></div>
+    <?php endif; ?>
+    <?php $featured=datogedon_featured_comment(get_the_ID()); if($featured): ?>
+    <aside class="discussion-featured" aria-labelledby="featured-comment-heading">
+        <h3 id="featured-comment-heading">Una aportación para la conversación</h3>
+        <blockquote><?php echo esc_html(wp_trim_words(wp_strip_all_tags($featured->comment_content),55,'…')); ?></blockquote>
+        <p><?php echo esc_html(get_comment_author($featured)); ?> <span aria-hidden="true">·</span> <a href="<?php echo esc_url(get_comment_link($featured)); ?>">Leer y responder <span aria-hidden="true">→</span></a></p>
+    </aside>
     <?php endif; ?>
     <?php
     $fields=array(
@@ -30,12 +33,19 @@ $asterisk=$required?' <span aria-hidden="true">*</span>':'';
     comment_form(array(
         'fields'=>$fields,
         'comment_field'=>'<p class="comment-form-comment"><label for="comment">Comentario <span aria-hidden="true">*</span></label><textarea id="comment" name="comment" rows="5" required aria-required="true" placeholder="Escribe tu comentario…"></textarea></p>',
-        'comment_notes_before'=>'<p class="comment-notes">Tu correo no se publica.'.($required?' Los campos con * son obligatorios.':'').'</p>',
+        'comment_notes_before'=>'<p class="comment-welcome">Puedes discrepar, preguntar o compartir tu experiencia. Cuidemos el trato entre personas.</p><p class="comment-notes">Tu correo no se publica.'.($required?' Los campos con * son obligatorios.':'').'</p>',
         'class_submit'=>'submit comment-submit',
-        'title_reply'=>'Escribe un comentario',
+        'title_reply'=>'Comparte tu experiencia',
         'title_reply_to'=>'Responder a %s',
         'cancel_reply_link'=>'Cancelar respuesta',
         'label_submit'=>'Enviar comentario',
     ));
     ?>
+    <?php if(have_comments()): ?>
+        <ul class="comment-list" role="list">
+            <?php wp_list_comments(array('style'=>'ul','format'=>'html5','short_ping'=>true,'avatar_size'=>40,'callback'=>'datogedon_reader_comment')); ?>
+        </ul>
+        <?php the_comments_navigation(array('prev_text'=>'← Comentarios anteriores','next_text'=>'Comentarios siguientes →')); ?>
+        <?php if(!comments_open()): ?><p class="no-comments">Los comentarios están cerrados.</p><?php endif; ?>
+    <?php endif; ?>
 </section>

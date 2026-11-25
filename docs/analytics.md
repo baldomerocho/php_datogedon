@@ -55,3 +55,13 @@ GitHub Actions. La salida omite IPs, IDs de visitantes y términos de búsqueda.
 Para consultar el rendimiento, filtrar por categoría en Comportamiento → Eventos.
 Los IDs `post:ID` corresponden al ID de la entrada en WordPress. Separar aperturas,
 progreso de lectura e intención de colaboración al interpretar los resultados.
+
+## Conversaciones
+
+`Discussion/view` registra ver la cabecera; `open`, el acceso a participar;
+`start`, comenzar a escribir una vez por página; `reply`, elegir responder;
+`featured_open`, abrir el comentario destacado. Usan solamente `post:ID`.
+`submit` registra el intento de envío; `received`, un recibo de inserción aceptada
+(aprobada o pendiente), consumido una vez mediante cookie de 120 segundos con
+valor fijo. No indica aprobación, no mide todo envío si el navegador bloquea
+analítica y no incluye contenido, nombres ni correo. No se inicializa otro tracker.

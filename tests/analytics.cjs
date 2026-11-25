@@ -53,7 +53,16 @@ const assert=require('node:assert/strict');
  assert.ok((await commands()).every(x=>x[0]==='trackEvent'),'Must not initialize Matomo or duplicate pageviews/searches');
  await page.unroute('**/wp-json/datogedon-reader/v1/search?*');
  await page.clock.install();
- await page.goto(articleUrl,{waitUntil:'domcontentloaded'});await page.bringToFront();
+ await context.addCookies([{name:'datogedon_comment_received',value:'1',url:base}]);
+ await page.goto(process.env.COMMENTS_URL||base+'/web/integracion-ia-1/',{waitUntil:'domcontentloaded'});await page.bringToFront();
+ assert.equal(await count('Discussion','received'),1);
+ assert.equal((await context.cookies()).filter(c=>c.name==='datogedon_comment_received').length,0,'Receipt consumed once');
+ // Dispatch only a canceled event: no request or real comment is submitted.
+ await page.locator('#commentform').evaluate(form=>{
+  form.addEventListener('submit',e=>e.preventDefault());
+  form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+ });
+ assert.equal(await count('Discussion','submit'),1);
  const body=page.locator('article .post-content');
  // Long synthetic content makes article-based progress measurable independently of the footer.
  await body.evaluate(el=>{el.style.minHeight='4200px'});

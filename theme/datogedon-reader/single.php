@@ -29,6 +29,7 @@ get_header();
                     
                     <div class="post-author-meta">
                         <span class="author-name"><?php _e( 'Por', 'datogedon-reader' ); ?> <?php the_author_posts_link(); ?></span>
+                    <?php if(comments_open() || get_comments_number()): ?><a class="discussion-entry" href="#comments"><?php $count=(int)get_comments_number(); echo $count?esc_html(number_format_i18n($count).' '.($count===1?'comentario':'comentarios')):'Abre la conversación'; ?><?php if(comments_open()): ?> <span aria-hidden="true">·</span> Participa<?php endif; ?> <span aria-hidden="true">↓</span></a><?php endif; ?>
                     </div>
                 </header>
 
@@ -59,13 +60,13 @@ get_header();
                 </footer>
             </article>
 
-            <?php datogedon_reader_related_posts(); ?>
             <?php
             if ( comments_open() || get_comments_number() ) :
                 comments_template();
             endif;
             ?>
 
+            <?php datogedon_reader_related_posts(); ?>
         <?php endwhile; ?>
     </div>
 </main>

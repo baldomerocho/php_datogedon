@@ -10,6 +10,30 @@
             if (Number.isFinite(value)) command.push(value);
             try { window._paq.push(command); } catch (_) { /* Analytics must not interrupt navigation. */ }
         }
+        const discussion = document.querySelector('#comments');
+        const post = document.querySelector('body.single-post article[data-post-id]');
+        const discussionId = post && post.getAttribute('data-post-id');
+        const discussionLabel = discussionId && /^\d+$/.test(discussionId) ? 'post:' + discussionId : 'article';
+        if (document.cookie.split(';').some(c => c.trim() === 'datogedon_comment_received=1')) {
+            document.cookie = 'datogedon_comment_received=; Max-Age=0; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+            event('Discussion', 'received', 'comment');
+        }
+        if (discussion) {
+            let started = false;
+            discussion.addEventListener('input', e => {
+                if (!started && e.target.matches('#comment') && e.target.value.trim()) {
+                    started = true; event('Discussion', 'start', discussionLabel);
+                }
+            });
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver(entries => {
+                    if (entries.some(entry => entry.isIntersecting)) {
+                        event('Discussion', 'view', discussionLabel); observer.disconnect();
+                    }
+                });
+                observer.observe(discussion.querySelector('.comments-heading'));
+            }
+        }
         function searchLocation(form) {
             return form.closest('#masthead') ? 'header' : form.closest('.home-hero') ? 'hero' : 'results';
         }
@@ -24,6 +48,9 @@
             }
             const link = e.target.closest('a[href]');
             if (!link) return;
+            if (link.matches('.discussion-entry,.comment-jump,.comment-reply-link,.discussion-featured a')) {
+                event('Discussion', link.matches('.comment-reply-link') ? 'reply' : link.matches('.discussion-featured a') ? 'featured_open' : 'open', discussionLabel);
+            }
             const target = new URL(link.href, location.href);
             if (target.origin !== location.origin) return; // Native Matomo tracks outlinks/downloads.
             const path = target.pathname.replace(/\/+$/, '') || '/';
@@ -45,6 +72,7 @@
             }
         });
         document.addEventListener('submit', function (e) {
+            if (e.target.matches('#commentform')) event('Discussion', 'submit', discussionLabel);
             if (e.target.matches('.search-form') && e.target.querySelector('.search-field').value.trim()) event('Search', 'submit', searchLocation(e.target));
         });
         const results = document.querySelector('[data-search-results]');

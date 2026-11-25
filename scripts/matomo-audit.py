@@ -3,8 +3,8 @@
 import argparse,json,os,re,stat,sys,urllib.error,urllib.parse,urllib.request
 from pathlib import Path
 
-CATEGORIES={'Interface','Navigation','Search','Reading','Collaboration'}
-ACTIONS={'theme_change','open','contact_open','related_open','article_open','section_open','autocomplete_select','submit','results','progress_50','progress_90'}
+CATEGORIES={'Interface','Navigation','Search','Reading','Collaboration','Discussion'}
+ACTIONS={'theme_change','open','contact_open','related_open','article_open','section_open','autocomplete_select','submit','results','progress_50','progress_90','view','start','reply','featured_open','received'}
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -51,7 +51,7 @@ def main():
             if category not in CATEGORIES or action_name not in ACTIONS:continue
             name=action.get('eventName','')
             # Discard arbitrary labels; never export visitor IDs, IPs or search phrases.
-            if not re.fullmatch(r'post:[0-9]+|light|dark|header|footer|content|hero|results|found|empty|home|topics|experiences|about|mobile_menu',str(name)):name=None
+            if not re.fullmatch(r'post:[0-9]+|light|dark|header|footer|content|hero|results|found|empty|home|topics|experiences|about|mobile_menu|article|comment',str(name)):name=None
             events.append({'category':category,'action':action_name,'name':name,'time':action.get('serverTimePretty')})
     report={'site_id':args.site_id,'hostname':args.expected_host,'timezone':site.get('timezone'),'date':args.date,
         'visits':{k:visits[k] for k in ['nb_visits','nb_uniq_visitors','nb_actions'] if k in visits},
