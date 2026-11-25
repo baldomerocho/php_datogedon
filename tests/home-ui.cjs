@@ -9,6 +9,7 @@ const assert=require('node:assert/strict');
   await page.goto(base,{waitUntil:'networkidle'});
   assert.equal(await page.locator('h1').count(),1);
   assert.equal(await page.locator('.home-edition').count(),1);
+  assert.equal(await page.locator('.edition-search .search-field').evaluate(e=>getComputedStyle(e).margin),'0px','Search must not inherit external input margins');
   assert.equal(await page.locator('.home-story--lead').count(),1);
   assert.ok(await page.locator('#home-experiences-title').count());
   assert.equal(await page.locator('.home-story').count(),12);

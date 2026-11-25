@@ -6,7 +6,8 @@
 .home-edition .edition-intro h1 { margin:0;font-size:clamp(2rem,3.3vw,2.75rem);line-height:1.12;letter-spacing:-.045em; }
 .edition-intro-side p { margin:0 0 1rem;font-size:.9rem;line-height:1.65;color:var(--text-muted);max-width:34ch; }
 .edition-search .search-form { margin:0;max-width:none; }
-.edition-search .search-field { height:44px;font-size:.85rem; }
+.edition-search label { min-width:0; }
+.edition-search .search-field { height:44px;font-size:.85rem;margin:0!important; }
 .edition-search .search-submit { min-width:36px;min-height:36px; }
 .home-edition .edition-channels { display:flex;justify-content:flex-start;align-items:center;gap:1.75rem;margin:0;border-top:1px solid var(--text-headings);border-bottom:1px solid var(--border);padding:.85rem 0;font-size:.8rem;font-weight:600; }
 .edition-channels a { display:flex;gap:.6rem;align-items:center;text-decoration:none;min-height:26px; }
