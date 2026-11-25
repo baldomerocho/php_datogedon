@@ -86,3 +86,9 @@ de 1,05 segundos y luego permanece quieta para leer. Los bumpers conservan sus
 `manifest.json.motion` identifica el preset y la revisión del render invalida
 los videos anteriores de la cola. La salida se valida por fotogramas del stream,
 no solamente por la duración del contenedor.
+
+Criterio editorial del gancho: protagonista reconocible + acción en los primeros
+1–2 segundos; después, dato curioso y matiz. El titular presenta la cifra desde
+la entrada, con el alcance visible. Introducir la jerga después del gancho.
+La duración total del gancho puede ser mayor: no acelerar la voz para comprimir
+una explicación completa en dos segundos ni usar rumores como curiosidad.

@@ -8,8 +8,18 @@ No invoques el renderizador ni otro agente: el padre lo hace una vez y mantiene
 el estado del video separado del éxito del artículo. No subas medios a TikTok ni
 Metricool; no simules que la conexión o una publicación existen.
 
-Estructura común: primera escena es un gancho breve (una o dos frases), luego el
-padre inserta una intro visual de un segundo con el logo. El resto desarrolla el
+Estructura común: primera escena es un gancho breve (una o dos frases).
+En los primeros 1–2 segundos identifica QUIÉN + QUÉ pasó: nombre reconocible
+(Rust, Google, etc.) y verbo concreto. Sigue con el dato curioso, comparación o
+consecuencia respaldada por la fuente. El titular muestra ese dato desde la
+entrada; no esperes a una explicación larga. El límite de 1–2 segundos es para
+identificar protagonista y novedad, no para acelerar toda la narración.
+Ejemplo de enfoque: «Rust redujo casi un 22 % el tiempo de revisión en una prueba.
+Pero hay un detalle». Mantén visible el alcance de la prueba y explica enseguida
+el matiz; no sugieras que todo proyecto obtiene ese resultado. Evita abrir con
+jerga como nightly o frontend sin contexto; introdúcela después en lenguaje claro.
+El «chisme» es el hecho que despierta curiosidad, nunca un rumor o exageración.
+Después del gancho el padre inserta una intro visual de un segundo con el logo. El resto desarrolla el
 contenido. El padre muestra el logo y «Comparte» sobre los últimos segundos de la
 voz. No agregues música, efectos ni una despedida hablada extra.
 Incluye series_title="Noticias de tecnología" para noticias o "Experiencias con IA"
