@@ -192,6 +192,16 @@ class NewsRuntime(unittest.TestCase):
 
 
 class PublicationDateReconciliation(unittest.TestCase):
+    def test_preflight_failure_records_details_without_starting_writer(self):
+        from argparse import Namespace
+        args=Namespace(force=False,health=False,verify_only=False,collect_only=False,credentials=Path('unused'))
+        issues=[{'post_id':1,'issue':'fecha remota distinta; no se modificó'}]
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);write(root/'editorial-config.json',{});write(root/'private/cycle-context.json',{'key':'2026-11-26:news:0900','mode':'news'})
+            with patch('runtime.WordPress'),patch('runtime.reconcile',return_value={'issues':issues}),patch('runtime.notify'),patch('runtime.subprocess.Popen') as writer,contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(execute(root,args),1);writer.assert_not_called()
+            report=read(root/'daily-status.json');self.assertEqual(report['failed_stage'],'preflight');self.assertEqual(report['preflight_issues'],issues);self.assertTrue(report['runtime_release'])
+
     def test_equivalent_formats_do_not_block_but_real_changes_do(self):
         from runtime import reconcile
         class WP:

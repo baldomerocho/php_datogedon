@@ -197,7 +197,7 @@ def _locked(root,args,current,day,config,private):
         write(root/'editorial-health.json',report)
         if issues:notify(root,'health_failed','Hay un problema en la cola editorial. Revisa editorial-health.json.');return 1
         print(json.dumps(report));return 0
-    status={'started_at':now().isoformat(),'sources':{},'stage':'collecting'};write(root/'daily-status.json',status)
+    status={'started_at':now().isoformat(),'runtime_release':Path(__file__).resolve().parent.name,'sources':{},'stage':'collecting'};write(root/'daily-status.json',status)
     try:
         cycle=cycle_context(root)
         if cycle.get('mode')!='news':
@@ -217,8 +217,11 @@ def _locked(root,args,current,day,config,private):
             if args.collect_only:write(root/'daily-status.json',status);return 0
         else:
             status.update(stage='researching',sources={'web':{'required':True}})
+        status['stage']='preflight';write(root/'daily-status.json',status)
         wp=WordPress(args.credentials);before=reconcile(root,wp)
-        if before['issues']:raise RuntimeError('La cola necesita revisión antes de generar nuevas entradas')
+        if before['issues']:
+            status['preflight_issues']=before['issues']
+            raise RuntimeError('La cola necesita revisión antes de generar nuevas entradas')
         success=read(success_path(root),{})
         if not args.force and success.get('date')==day:
             status.update(stage='already_completed',status='ok',verified_post_ids=success['post_ids']);write(root/'daily-status.json',status);print(json.dumps(status));return 0
@@ -248,7 +251,9 @@ def _locked(root,args,current,day,config,private):
                 try:process.wait(timeout=10)
                 except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
                 raise RuntimeError('La redacción superó 45 minutos; verificar antes de reintentar')
+        status.update(stage='verifying',worker_exit_code=process.returncode)
         after=reconcile(root,wp)
+        if after['issues']:status['postflight_issues']=after['issues']
         new=cycle_changes(before['posts'],after['posts'],read(root/'queue.json'),cycle) if cycle else [p for p in after['posts'] if p['id'] not in original_ids]
         latest=read(root/'daily-status.json',{})
         if latest.get('editorial'):status['editorial']=latest['editorial']
@@ -276,7 +281,7 @@ def _locked(root,args,current,day,config,private):
         write(success_path(root),{'date':day,'verified_at':now().isoformat(),'post_ids':[p['id'] for p in new],'kind':'worker_verified' if new else 'reviewed_no_story'})
         status.update(stage='verified' if new else 'reviewed_no_story',status='ok',scheduled=new,worker_exit_code=0)
     except Exception as error:
-        status.update(stage='failed',status='blocked',reason=str(error) if isinstance(error,RuntimeError) else type(error).__name__)
+        status.update(failed_stage=status.get('stage'),stage='failed',status='blocked',reason=str(error) if isinstance(error,RuntimeError) else type(error).__name__)
         notify(root,'run_failed','La ejecución editorial falló. Revisa daily-status.json; se conservó el progreso.')
     status['finished_at']=now().isoformat();write(root/'daily-status.json',status)
     with (root/'run-history.jsonl').open('a') as stream:os.chmod(root/'run-history.jsonl',0o600);stream.write(json.dumps(status)+'\n')

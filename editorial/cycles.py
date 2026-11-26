@@ -50,11 +50,14 @@ def run(root,mode,health=False):
         cycle['started_at']=current.isoformat();write(work/'private/cycle-context.json',cycle)
         if mode=='experience':
             (work/'DAILY-TASK.txt').write_text(Path(__file__).with_name('task.txt').read_text());os.chmod(work/'DAILY-TASK.txt',0o600)
-        ledger[cycle['key']]={'status':'started','started_at':current.isoformat()};write(private/'cycles.json',ledger)
+        ledger[cycle['key']]={'status':'started','started_at':current.isoformat(),'runtime_release':Path(__file__).resolve().parent.name};write(private/'cycles.json',ledger)
         args=Namespace(force=False,health=False,verify_only=False,collect_only=False,adopt_today=False,credentials=Path.home()/'.local/share/datogedon-mcp/credentials.json')
         try:
             result=execute(work,args)
             ledger[cycle['key']].update(status='completed' if result==0 else 'failed',finished_at=now().isoformat(),result=result)
+            if result:
+                failure=read(work/'daily-status.json',{})
+                ledger[cycle['key']].update({k:failure[k] for k in ['failed_stage','reason','preflight_issues','worker_exit_code'] if k in failure})
         except Exception as error:
             ledger[cycle['key']].update(status='failed',finished_at=now().isoformat(),error=type(error).__name__)
         write(private/'cycles.json',ledger)
