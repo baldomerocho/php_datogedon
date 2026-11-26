@@ -234,6 +234,9 @@ def _locked(root,args,current,day,config,private):
                 page+=1
             snapshot[taxonomy]=items
         write(root/'wordpress-taxonomies.json',snapshot)
+        if cycle and config.get('video',{}).get('enabled'):
+            from extended_catalog import public_guides
+            write(root/'public-video-catalog.json',{'videos':public_guides(Path(config['video']['state_dir']).expanduser())})
         status['stage']='writing';write(root/'daily-status.json',status)
         original_ids={p['id'] for p in before['posts']};command=shutil.which('codex')
         if not command:raise RuntimeError('Codex no está en PATH')

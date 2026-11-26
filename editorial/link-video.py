@@ -11,6 +11,7 @@ def provider(url):
     for name,pattern in [
         ('TikTok',r'https://www\.tiktok\.com/@datogedon/video/[0-9]+'),
         ('YouTube',r'https://www\.youtube\.com/shorts/[A-Za-z0-9_-]{11}'),
+        ('YouTube completo',r'https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}'),
         ('Instagram',r'https://www\.instagram\.com/datogedon/reel/[A-Za-z0-9_-]+/'),
     ]:
         if re.fullmatch(pattern,url):return name
@@ -28,7 +29,8 @@ def reference(content,url):
             links[old_name]=old
     if name in links and links[name]!=url:raise ValueError('A different video is already linked for this platform')
     links[name]=url
-    block=START+'\n<h2>Resumen en video</h2>\n'+'\n'.join('<p><a href="'+html.escape(link,quote=True)+'">Ver el resumen en '+label+' · @datogedon</a></p>' for label,link in links.items())+'\n'+END
+    title='Videos relacionados' if 'YouTube completo' in links else 'Resumen en video'
+    block=START+'\n<h2>'+title+'</h2>\n'+'\n'.join('<p><a href="'+html.escape(link,quote=True)+'">'+('Ver la guía completa en YouTube' if label=='YouTube completo' else 'Ver el resumen en '+label)+' · @datogedon</a></p>' for label,link in links.items())+'\n'+END
     if existing:
         return re.sub(re.escape(START)+r'.*?'+re.escape(END),lambda _:block,content,flags=re.S)
     sources=re.search(r'<h2\b[^>]*>\s*Fuentes\s*</h2>',content,re.I)

@@ -7,17 +7,22 @@ def validate(brief):
     if brief.get('account')!='@datogedon':raise ValueError('Unexpected target account')
     if not 3<=len(brief.get('scenes',[]))<=8:raise ValueError('Use 3–8 scenes')
     if not brief.get('sources'):raise ValueError('Cited sources required')
+    if brief.get('script_version',1)>=2:
+        hook=brief['scenes'][0]
+        if len(hook.get('chunks',[]))!=1 or len(re.findall(r'\w+',hook['chunks'][0]))>22:raise ValueError('The opening must be one useful sentence of at most 22 words')
+        if hook.get('visual') not in ['comparison','flow','metric']:raise ValueError('The opening must show the change, mechanism or sourced result')
     for key in ['topic_label','date_label','source_label']:
         if not isinstance(brief.get(key),str) or not 1<=len(brief[key])<=70:raise ValueError('Editorial labels required')
     for scene in brief['scenes']:
-        if scene.get('visual') not in ['parallel','comparison','metric','context','question']:raise ValueError('Unsupported visual')
+        if scene.get('visual') not in ['parallel','comparison','metric','context','question','flow']:raise ValueError('Unsupported visual')
         if not scene.get('headline') or len(scene['headline'])>100:raise ValueError('Short headline required')
         if not scene.get('chunks'):raise ValueError('Narration missing')
         data=scene.get('visual_data',{})
-        required={'parallel':['label','note'],'comparison':['rows'],'metric':['value','detail','scope','note'],'context':['title','labels'],'question':['line1','line2','comparison','note']}[scene['visual']]
+        required={'parallel':['label','note'],'comparison':['rows'],'metric':['value','detail','scope','note'],'context':['title','labels'],'question':['line1','line2','comparison','note'],'flow':['from','to','condition','check']}[scene['visual']]
         if any(key not in data for key in required):raise ValueError('Visual data missing; never reuse unrelated numbers')
         if scene['visual']=='comparison' and len(data['rows'])!=2:raise ValueError('Comparison requires two rows')
         if scene['visual']=='context' and not 1<=len(data['labels'])<=3:raise ValueError('Use at most three contextual labels')
+        if scene['visual']=='flow' and (any(not isinstance(data[k],list) or not 1<=len(data[k])<=2 or any(not isinstance(s,str) or len(s)>26 for s in data[k]) for k in ['from','to']) or len(data['condition'])>40 or len(data['check'])>44):raise ValueError('Flow labels overflow safe areas')
         for chunk in scene['chunks']:
             if not isinstance(chunk,str) or not chunk.strip() or len(chunk)>155:raise ValueError('Short caption chunks required')
     words=sum(len(re.findall(r'\w+',c)) for scene in brief['scenes'] for c in scene['chunks'])
@@ -72,6 +77,16 @@ def card(scene,index,total,brief,path):
         centered(data['title'],673,48,white,True)
         for n,label in enumerate(data['labels']):
             y=765+n*87;d.rounded_rectangle((135,y,835,y+65),radius=12,fill='#303030');centered(label,y+13,31)
+    elif visual=='flow':
+        centered(data['condition'],675,31,white,True)
+        for x,key in [(130,'from'),(525,'to')]:
+            d.rounded_rectangle((x,770,x+310,940),radius=18,fill='#303030',outline='#707070',width=2)
+            for n,label in enumerate(data[key]):
+                size=30
+                while d.textlength(label,font=font(size,True))>280 and size>20:size-=1
+                d.text((x+(310-d.textlength(label,font=font(size,True)))/2,805+n*54),label,font=font(size,True),fill=white)
+        d.line((453,855,507,855),fill=white,width=5);d.polygon([(507,855),(491,844),(491,866)],fill=white)
+        centered(data['check'],1000,27,muted)
     else:
         centered(data['line1'],690,43,white,True);centered(data['line2'],770,43,white,True);centered(data['comparison'],893,52,orange,True);centered(data['note'],994,27,muted)
     d.text((90,1120),brief['source_label'],font=font(24),fill=muted)
@@ -83,6 +98,7 @@ def card(scene,index,total,brief,path):
 def render(brief,output,tts_config,branding=None):
     from gemini_tts import GeminiSpeech
     from video_finish import branding_spec,brand_card,intro_timeline,outro_timeline,news_ident,master,verify_mastering,verify_frames
+    from extended_catalog import outro_target
     branding=branding_spec(branding)
     branding.setdefault('mode','news' if brief.get('series_title')=='Noticias de tecnología' else 'experience')
     validate(brief);output.mkdir(parents=True,exist_ok=True)
@@ -113,9 +129,16 @@ def render(brief,output,tts_config,branding=None):
     (output/'subtitles.srt').write_text(srt)
     header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Arial,48,&H00FFFFFF,&H00FFFFFF,&HCC111111,&HCC111111,0,0,0,0,100,100,0,0,3,13,0,2,100,180,460,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
     events=[]
+    target=outro_target(brief)
+    if branding['enabled']:
+        header=header.replace('\n\n[Events]','\nStyle: Outro,Arial,44,&H00FFFFFF,&H00FFFFFF,&HCC111111,&HCC111111,0,0,0,0,100,100,0,0,3,13,0,2,100,180,350,1\n\n[Events]')
+    outro_start=next((s['start'] for s in scenes if s['kind']=='outro'),cursor)
     for c in chunks:
         text=c['text'].replace('\\','').replace('{','').replace('}','').replace('\n',' ')
-        events.append(f"Dialogue: 0,{timestamp(c['start'],True)},{timestamp(c['end'],True)},Default,,0,0,0,,{text}")
+        intervals=[(c['start'],c['end'],'Default')]
+        if branding['enabled'] and c['end']>outro_start:intervals=[(c['start'],min(c['end'],outro_start),'Default'),(max(c['start'],outro_start),c['end'],'Outro')]
+        for start,end,style in intervals:
+            if end>start:events.append(f"Dialogue: 0,{timestamp(start,True)},{timestamp(end,True)},{style},,0,0,0,,{text}")
     (output/'captions.ass').write_text(header+'\n'.join(events)+'\n')
     from video_motion import encode
     motion=encode(output,scenes,{f'scene-{i:02}.png':scene['visual'] for i,scene in enumerate(brief['scenes'])})
@@ -126,6 +149,7 @@ def render(brief,output,tts_config,branding=None):
     digest=hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()
     manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'palette':{'name':'datogedon-grayscale-v1','surfaces':'grayscale','accent':'#ff966f','accent_usage':'key_metric_or_comparison_only'},'motion':motion,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
     manifest['branding'].update(narration_continues=True,news_ident=ident)
+    manifest['extended_video']=target
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
@@ -155,6 +179,10 @@ def enqueue(root,post,config):
     except (ValueError,TypeError,KeyError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'InvalidBrief','updated_at':now().isoformat(),'published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
     from video_finish import branding_spec
+    from extended_catalog import related_guide
+    brief['extended_video']=related_guide(state,brief)
+    if brief['extended_video'] and brief['extended_video']['url'] not in brief['caption']:
+        brief['caption']+='\n\nGuía completa: '+brief['extended_video']['url']
     try:
         branding=branding_spec(config.get('branding'))
         if branding['enabled']:
@@ -163,18 +191,19 @@ def enqueue(root,post,config):
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':6},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'renderer_version':7},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}
     store_job(queue_path,key,job)
     tts_config_path=state/'voice-config.json';write(tts_config_path,config['tts'])
     branding_config_path=state/'branding-config.json';write(branding_config_path,branding)
+    render_brief=state/f'render-brief-{key}.json';write(render_brief,brief)
     process=None
     try:
         with (state/f"render-{key}.log").open('a') as log:
             os.chmod(log.name,0o600)
-            process=subprocess.Popen([str(Path(config['python']).expanduser()),str(Path(__file__).resolve()),'--brief',str(brief_path),'--output',str(output),'--tts-config',str(tts_config_path),'--branding-config',str(branding_config_path)],stdout=log,stderr=log,start_new_session=True)
+            process=subprocess.Popen([str(Path(config['python']).expanduser()),str(Path(__file__).resolve()),'--brief',str(render_brief),'--output',str(output),'--tts-config',str(tts_config_path),'--branding-config',str(branding_config_path)],stdout=log,stderr=log,start_new_session=True)
             process.wait(timeout=360)
         if process.returncode:raise RuntimeError('Local renderer failed')
         manifest=read(output/'manifest.json')

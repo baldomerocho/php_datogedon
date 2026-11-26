@@ -16,7 +16,19 @@ No simules conexiones, publicación, programación ni URLs de ninguna plataforma
 confirmar video público se añade su referencia al MISMO artículo; los programados
 no se anuncian como disponibles. No crear entradas duplicadas para el video.
 
-Estructura común: primera escena es un gancho breve (una o dos frases).
+Incluye script_version=2. La primera escena es una sola frase de hasta 22 palabras:
+protagonista y beneficio, problema o consecuencia concreta. Su primera imagen
+debe mostrar esa idea, con una comparación, un flujo o una cifra respaldada.
+Evita abrir enumerando novedades, anunciando «te contamos» o nombrando una versión
+sin explicar por qué importa. No agregues una pregunta de suspense para retrasar
+el dato útil. La explicación y su condición relevante comienzan inmediatamente.
+Ejemplos: «Firefox puede usar la VPN en una web aunque el interruptor general esté
+apagado». «Flutter: confirmar tu correo no debería cerrarte la sesión».
+Elige una visual que demuestre el estado, regla o cambio; una tarjeta con solo el
+nombre de la herramienta no basta. Si es un esquema, sus resultados son los
+esperados según la fuente: no presentes una prueba local que no se realizó.
+
+Estructura común: primera escena es un gancho breve.
 En los primeros 1–2 segundos identifica QUIÉN + QUÉ pasó: nombre reconocible
 (Rust, Google, etc.) y verbo concreto. Sigue con el dato curioso, comparación o
 consecuencia respaldada por la fuente. El titular muestra ese dato desde la
@@ -33,7 +45,9 @@ usan una entrada visual rápida y un identificador sonoro original de menos de m
 por debajo de la voz. Experiencias con IA conservan una entrada tranquila y sin ese sonido.
 El resto desarrolla el
 contenido. El padre muestra el logo y «Comparte» sobre los últimos segundos de la
-voz. El MP4 maestro conserva la voz y, solo en noticias, el identificador sonoro; no lleva música
+voz, acompañado de «Sigue a @datogedon» o la guía completa relacionada si ya está
+publicada. No agregues una despedida hablada para esa pantalla.
+El MP4 maestro conserva la voz y, solo en noticias, el identificador sonoro; no lleva música
 de fondo. La música complementaria se selecciona después
 en TikTok según el plan de distribución. No agregues efectos ni despedida hablada extra.
 Incluye series_title="Noticias de tecnología" para noticias o "Experiencias con IA"
@@ -55,6 +69,7 @@ todo el artículo: elige una sola decisión y desarrolla su cadena causal.
 En noticias, explica el cambio, su consecuencia práctica y las condiciones que
 limitan su aplicación. En ambos formatos la pregunta al público es OPCIONAL:
 no sustituye la explicación ni añade una escena si solo repite el gancho.
+No cierres con una pregunta genérica como sustituto de un criterio aplicable.
 Antes de entregar, lee únicamente la narración, sin apoyarte en el artículo ni en
 los gráficos: debe entenderse qué fallaba, qué cambió, por qué funciona y qué
 puede comprobar el espectador. Si falta una respuesta, corrige el cuerpo del guion.
@@ -72,12 +87,17 @@ llamadas de audio. El montaje mide cada fragmento y adapta los subtítulos. Los 
 no representan capturas ni hechos fotografiados. Nada de marcas de agua o URLs
 promocionales superpuestas; la referencia al artículo va en caption.
 
-JSON requerido:
+JSON requerido: script_version=2,
 post_id (ID entero), account="@datogedon", article_url (permalink publicado),
 sources (lista de URLs públicas), topic_label (tema corto), date_label (fecha REAL
 del anuncio o experiencia, no fingir que ocurrió hoy), source_label (crédito corto),
 caption (descripción, fuentes/artículo y 3–4 hashtags pertinentes; indicar voz
 sintética), scenes (3–8 objetos con headline corto, visual, visual_data y chunks).
+Lee public-video-catalog.json si existe. Solo cuando una guía publicada amplíe
+directamente este mismo problema, añade extended_post_id con su post_id y explica
+esa relación en el caption. No inventes URLs ni promociones una guía pendiente.
+El padre verifica el catálogo y añade la llamada visual del outro. No sacrifiques
+la explicación del corto para usarlo como un anuncio del video largo.
 
 Visuales disponibles, sin valores por defecto tomados de otra noticia:
 - context: visual_data={title,labels:[1–3 textos de hasta 22 caracteres]}.
@@ -87,6 +107,9 @@ Visuales disponibles, sin valores por defecto tomados de otra noticia:
 - question: visual_data={line1,line2,comparison,note}; frases muy breves.
 - parallel: visual_data={label,note}; esquema conceptual de dos vías, solo cuando
   la historia justifica hablar de paralelismo, no para representar un speedup.
+- flow: visual_data={from:[1–2 estados],to:[1–2 estados],condition,check}.
+  Estados <=26 caracteres, condition<=40 y check<=44. Muestra la transición y su
+  condición, sin simular una captura real ni inventar resultados de ejecución.
 Headlines de hasta 3 líneas, 6–8 palabras como máximo. Los campos de gráficos se
 pintan grandes: no incluyas párrafos. El redactor revisa la relevancia y veracidad;
 la validación mecánica no sustituye esa revisión. Si no hay resumen fiel o el tema

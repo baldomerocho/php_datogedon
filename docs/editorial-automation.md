@@ -212,3 +212,27 @@ el trabajo. Un fallo al enlazar no revierte una publicación social; queda pendi
 para conciliación. Los registros históricos de distribución se conservan. Para
 pausar nuevas entregas, desactivar `video.distribution.enabled`; no borrar la cola
 ni volver a subir publicaciones inciertas.
+
+### Cortos orientados a comprensión y guías extendidas
+
+Los nuevos briefs usan `script_version=2`: una frase inicial de hasta 22 palabras,
+con protagonista y beneficio o consecuencia concreta. La primera visual muestra
+un flujo, comparación o cifra con respaldo. `flow` permite representar estados,
+condición y comprobación sin presentar un esquema como una prueba real.
+El cierre conserva la comprobación práctica; la pregunta al público es opcional.
+
+El renderer v7 mantiene narración continua, identidad en grises y el formato
+vertical. El outro añade «Sigue a @datogedon». Cuando una guía relacionada está
+publicada y su canal y visibilidad fueron verificados, muestra «Guía completa en
+YouTube»; los subtítulos se colocan debajo para evitar superponerlos al texto.
+El catálogo privado `videos/extended-catalog.json` contiene solo referencias
+públicas verificadas. El runtime entrega ese catálogo al redactor. El padre
+resuelve `extended_post_id`, añade el enlace al caption y descarta referencias
+sin publicación o identidad confirmadas. El publicador configura además el video
+relacionado nativo en YouTube cuando corresponde.
+
+`extended_video.py` genera guías seleccionadas en 1920×1080, con capítulos,
+diagramas originales animados y narración existente sin pausas de marca. Verifica
+duración, cantidad de fotogramas y mastering. El guion y la evidencia quedan en el
+estado privado; las referencias de la guía completa y del Short pueden coexistir
+en el mismo artículo sin sustituir las publicaciones anteriores.

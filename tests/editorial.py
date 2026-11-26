@@ -510,6 +510,33 @@ class VideoMotion(unittest.TestCase):
         with self.assertRaises(ValueError):progress(1,0,0)
 
 
+class ShortHookAndExtendedGuides(unittest.TestCase):
+    def test_new_scripts_open_with_one_useful_sentence_and_visual_mechanism(self):
+        from video import validate
+        brief=VideoDrafts().brief();brief['script_version']=2
+        brief['scenes'][0].update(visual='flow',visual_data={'from':['Sesión abierta'],'to':['Correo confirmado'],'condition':'Validar código','check':'La sesión continúa'})
+        validate(brief)
+        brief['scenes'][0]['chunks']=['palabra '*23]
+        with self.assertRaises(ValueError):validate(brief)
+        brief['scenes'][0]['chunks']=['Una frase breve.'];brief['scenes'][0]['visual']='context'
+        with self.assertRaises(ValueError):validate(brief)
+    def test_draft_or_unowned_guides_never_get_an_outro_link(self):
+        from extended_catalog import public_guides,related_guide,outro_target,CHANNEL
+        with tempfile.TemporaryDirectory() as directory:
+            state=Path(directory);guide={'post_id':1,'title':'A complete guide','url':'https://www.youtube.com/watch?v=abcdefghijk','channel_id':CHANNEL,'status':'draft','owner_verified':True,'public_verified':True}
+            write(state/'extended-catalog.json',{'videos':{'one':guide}});self.assertEqual(public_guides(state),[]);self.assertIsNone(outro_target({'extended_video':guide}))
+            guide['status']='published';write(state/'extended-catalog.json',{'videos':{'one':guide}})
+            target=related_guide(state,{'post_id':1});self.assertEqual(outro_target({'extended_video':target})['url'],guide['url'])
+            self.assertIsNone(related_guide(state,{'post_id':2}));self.assertEqual(related_guide(state,{'post_id':2,'extended_post_id':1})['url'],guide['url'])
+            guide['owner_verified']=False;write(state/'extended-catalog.json',{'videos':{'one':guide}});self.assertEqual(public_guides(state),[])
+            (state/'extended-catalog.json').write_text('{broken');self.assertEqual(public_guides(state),[])
+    def test_explanatory_routing_matrix_includes_override_and_paused_rules(self):
+        from extended_video import expected_route
+        self.assertEqual(expected_route('on',False),'VPN');self.assertEqual(expected_route('off',True),'Sin VPN')
+        self.assertEqual(expected_route('default',False),'Sin VPN');self.assertEqual(expected_route('default',True),'VPN')
+        self.assertEqual(expected_route('on',True,True),'Sin VPN')
+        with self.assertRaises(ValueError):expected_route('unknown',True)
+
 class VideoReference(unittest.TestCase):
     def reference(self,content,url='https://www.tiktok.com/@datogedon/video/12345'):
         import runpy
@@ -537,5 +564,10 @@ class VideoReference(unittest.TestCase):
         for url in ['https://www.youtube.com/shorts/aaaaaaaaaaa','https://www.youtube.com.evil.test/shorts/iug5hEtAbL0','https://www.youtube.com/shorts/iug5hEtAbL0?x=1','https://www.instagram.com/other/reel/abc/']:
             with self.assertRaises(ValueError):self.reference(body,url)
         with self.assertRaises(ValueError):self.reference('<!-- datogedon-video:end --><!-- datogedon-video:start -->')
+    def test_extended_guide_preserves_the_existing_short_and_other_platforms(self):
+        short='https://www.youtube.com/shorts/iug5hEtAbL0';guide='https://www.youtube.com/watch?v=abcdefghijk'
+        body=self.reference('<p>Original</p><h2>Fuentes</h2><p>Source</p>',short)
+        body=self.reference(body,guide);self.assertIn(short,body);self.assertIn(guide,body);self.assertIn('Ver la guía completa en YouTube',body)
+        self.assertEqual(self.reference(body,guide),body);self.assertTrue(body.endswith('<h2>Fuentes</h2><p>Source</p>'))
 
 if __name__=='__main__':unittest.main()

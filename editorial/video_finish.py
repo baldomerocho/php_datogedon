@@ -16,6 +16,7 @@ def branding_spec(config):
 
 def brand_card(config,brief,path,outro=False):
     from PIL import Image,ImageDraw,ImageFont,ImageOps
+    from extended_catalog import outro_target
     image=Image.new('RGB',(1080,1920),'#111111');draw=ImageDraw.Draw(image)
     draw.polygon([(730,0),(1080,0),(1080,1920),(940,1920)],fill='#191919')
     draw.rounded_rectangle((150,330,810,990),radius=34,fill='white')
@@ -30,6 +31,13 @@ def brand_card(config,brief,path,outro=False):
         else:lines.append(word)
     if len(lines)>2 or any(draw.textlength(line,font=font)>790 for line in lines):raise ValueError('Brand title overflows safe area')
     for n,line in enumerate(lines):draw.text((480-draw.textlength(line,font=font)/2,1090+n*94),line,font=font,fill='#fafafa')
+    if outro and outro_target(brief):
+        for label,y,size in [('Guía completa en YouTube',1215,42),('@datogedon',1263,30)]:
+            small=ImageFont.truetype(font_path,size)
+            draw.text((480-draw.textlength(label,font=small)/2,y),label,font=small,fill='#d8d8d8')
+    elif outro:
+        label='Sigue a @datogedon';small=ImageFont.truetype(font_path,42)
+        draw.text((480-draw.textlength(label,font=small)/2,1220),label,font=small,fill='#d8d8d8')
     draw.line((300,1028,660,1028),fill='#bdbdbd',width=5)
     if not outro and config.get('mode')=='news':
         draw.rectangle((90,165,880,222),fill='#fafafa')

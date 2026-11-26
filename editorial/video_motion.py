@@ -34,6 +34,7 @@ def layers(image,visual,brand=False):
     elif visual=='parallel':boxes=[((135+c*178,755,281+c*178,923),.18+c*.11,False) for c in range(4)]
     elif visual=='context':boxes=[((130,760+n*87,840,835+n*87),.16+n*.12,False) for n in range(3)]
     elif visual=='question':boxes=[((110,875,860,975),.24,True)]
+    elif visual=='flow':boxes=[((130,770,441,941),.12,False),((525,770,836,941),.30,False)]
     accents=[]
     for box,lag,pop in boxes:
         accent=image.crop(box).convert('RGBA')

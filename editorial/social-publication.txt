@@ -62,6 +62,11 @@ Revisar respuesta remota, guardar URL y estado en el registro y sidecar correspo
 
 El coordinador añade las referencias confirmadas al terminar el trabajo: el
 publicador hijo solo registra los resultados con pruebas y no edita el artículo.
+Si manifest.json incluye extended_video verificado y publicado, conserva su URL
+en el caption y añade esa misma guía como video relacionado nativo en YouTube.
+Comprueba título, canal y enlace seleccionado; no vincules otro video por compartir
+solo una tecnología. En Instagram y TikTok la llamada visual remite al canal
+@datogedon y al enlace de la guía en la descripción. No anuncies una guía pendiente.
 Usa el relay persistente mediante browser-call.py; no abras otro servidor MCP.
 En TikTok Draft.js no uses fill: click, borrar el texto inicial con teclas nativas
 y type_text; comprueba contador y vista previa. En Instagram activa la etiqueta
