@@ -12,6 +12,20 @@ def plist(label,root,python,script,hours,mode=None,health=False):
         'EnvironmentVariables':{'PATH':str(Path.home()/'.local/bin')+':/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin','TZ':'America/Guatemala'},
         'StandardOutPath':str(root/'private'/(label+'.log')),'StandardErrorPath':str(root/'private'/(label+'-error.log'))}
 
+def social_plists(root,python,base,node):
+    environment={'PATH':str(Path.home()/'.local/bin')+':/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin','TZ':'America/Guatemala'}
+    result=[]
+    for name,args in [('browser-relay',[node,str(base/'current/social-browser.mjs')]),
+                      ('publisher',[python,str(base/'current/social.py'),'--state-dir',str(root),'run'])]:
+        label='com.datogedon.social-'+name
+        definition={'Label':label,'ProgramArguments':args,'WorkingDirectory':str(root),'RunAtLoad':True,
+                    'EnvironmentVariables':environment,'StandardOutPath':str(root/'private'/(label+'.log')),
+                    'StandardErrorPath':str(root/'private'/(label+'-error.log'))}
+        if name=='browser-relay':definition.update(KeepAlive=True,ThrottleInterval=20)
+        else:definition['StartCalendarInterval']=[{'Hour':hour,'Minute':12} for hour in [6,9,11,13,15,18]]
+        result.append((label,definition))
+    return result
+
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--state-dir',type=Path,required=True);p.add_argument('--sha',required=True);a=p.parse_args()
     if sys.platform!='darwin':p.error('macOS required')
@@ -24,7 +38,7 @@ def main():
     config=read(root/'editorial-config.json');write(backup/'editorial-config.json',config)
     base=Path.home()/'.local/share/datogedon-editorial';release=base/'releases'/sha;release.mkdir(parents=True,exist_ok=True)
     for path in source.iterdir():
-        if path.is_file() and path.suffix in ['.py','.txt']:shutil.copy2(path,release/path.name)
+        if path.is_file() and path.suffix in ['.py','.txt','.mjs']:shutil.copy2(path,release/path.name)
     previous=os.readlink(base/'current') if (base/'current').is_symlink() else None
     write(backup/'release.json',{'previous':previous,'new':sha})
     temp=base/'current-next';temp.unlink(missing_ok=True);temp.symlink_to(release);os.replace(temp,base/'current')
@@ -39,5 +53,14 @@ def main():
         path.write_bytes(plistlib.dumps(plist(label,root,sys.executable,base/'current/cycles.py',hours,mode,health)))
         subprocess.run(['plutil','-lint',str(path)],check=True,capture_output=True)
         subprocess.run(['launchctl','bootstrap',f'gui/{os.getuid()}',str(path)],check=True)
+    if config.get('video',{}).get('distribution',{}).get('enabled'):
+        node=shutil.which('node')
+        if not node:raise RuntimeError('Node is required for the browser relay')
+        for label,definition in social_plists(root,sys.executable,base,node):
+            path=Path.home()/'Library/LaunchAgents'/(label+'.plist')
+            if path.exists():shutil.copy2(path,backup/path.name)
+            subprocess.run(['launchctl','bootout',f'gui/{os.getuid()}/{label}'],capture_output=True)
+            path.write_bytes(plistlib.dumps(definition));subprocess.run(['plutil','-lint',str(path)],check=True,capture_output=True)
+            subprocess.run(['launchctl','bootstrap',f'gui/{os.getuid()}',str(path)],check=True)
     print(json.dumps({'installed_sha':sha,'host':'macbook','experience_hours':[13,15,18],'news_hours':[6,9,11],'news_author':135,'backup':str(backup)}))
 if __name__=='__main__':main()

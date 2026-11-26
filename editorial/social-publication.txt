@@ -1,8 +1,9 @@
 PUBLICACIÓN SOCIAL DESDE EL CHROME DE DATOGEDON
 
-Este es el procedimiento del operador con navegador; no es un servicio de subida
-desatendida. El redactor prepara los textos y el padre renderiza; publicar es un
-paso separado. No anunciar automatización por horario sin ejecutor comprobado.
+Este procedimiento lo ejecuta el publicador local después de recibir un video
+verificado en su cola durable. Noticias se publican directamente; experiencias
+cuando su artículo está público. No requieren aprobación humana por pieza.
+Los controles editoriales, técnicos y de identidad siguen siendo obligatorios.
 
 Perfil y destinos
 El mapeo privado vive en ~/.local/share/datogedon-browser/accounts.json. Abrir con
@@ -21,8 +22,9 @@ publicación inmediata; experiencias: a la hora del artículo o después, confir
 que ya sea público. Si no hay programación fiable, mantener pendiente hasta poder
 comprobarlo; no adelantar el video. No reabrir piezas antiguas automáticamente
 sin revisar su vigencia y si ya tienen publicación en esa plataforma.
-Estado independiente en ~/claude-activity-audit/private/social-publication/status.json,
-posts[post_id][youtube|instagram]. TikTok conserva su registro existente. Antes de
+El publicador automático usa videos/distribution/outbox.json y el comando record
+indicado por su tarea. Los registros anteriores siguen siendo evidencia para
+conciliar, no se eliminan. Antes de
 subir revisar registros y contenido remoto por título/artículo. Guardar ID remoto
 tan pronto se asigne, estado uploading/draft/publishing/published y URL real.
 Si una respuesta es incierta, conciliar el mismo video; nunca volver a subir a ciegas.
@@ -49,11 +51,20 @@ y confirmar cuenta, caption, etiqueta y reproducción; si sigue procesando, regi
 ese estado sin marcar publicado ni duplicar la carga.
 
 Referencia en el blog
-Solo después de confirmar público y cuenta/canal, ejecutar el helper con URL
+Solo después de confirmar público y cuenta/canal, el coordinador ejecuta el helper con URL
 canónica (sin tracking) desde el código de editorial instalado:
 python3 link-video.py --post-id ID --video-url URL --state-dir ~/claude-activity-audit --confirmed-public --apply
 Acepta TikTok propio, YouTube /shorts/ID e Instagram /datogedon/reel/CODE/.
-YouTube exige confirmar el canal manualmente: la URL del Short no codifica autor.
+YouTube exige confirmar el canal en su interfaz: la URL del Short no codifica autor.
 Conserva enlaces de las otras plataformas en el mismo artículo, fuentes y fechas.
 Un ID distinto para una plataforma ya enlazada requiere revisión; no sobrescribirlo.
 Revisar respuesta remota, guardar URL y estado en el registro y sidecar correspondiente.
+
+El coordinador añade las referencias confirmadas al terminar el trabajo: el
+publicador hijo solo registra los resultados con pruebas y no edita el artículo.
+Usa el relay persistente mediante browser-call.py; no abras otro servidor MCP.
+En TikTok Draft.js no uses fill: click, borrar el texto inicial con teclas nativas
+y type_text; comprueba contador y vista previa. En Instagram activa la etiqueta
+IA con input[role=switch].click() si hace falta y confirma checked. Una respuesta
+de upload_file puede informar error después de completar: inspecciona el estado
+antes de repetir. Los UID cambian después de cada modal; vuelve a tomar snapshot.

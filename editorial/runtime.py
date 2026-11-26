@@ -278,6 +278,20 @@ def _locked(root,args,current,day,config,private):
                 except Exception as error:jobs.append({'post_id':summary['id'],'status':'failed','error':type(error).__name__})
             status['video_jobs']=[{k:j[k] for k in ['post_id','status'] if k in j} for j in jobs]
             if any(j['status']!='ready_for_review' for j in jobs):notify(root,'video_pending','El artículo se publicó, pero su video requiere revisión técnica. No se subió a TikTok.')
+            if config['video'].get('distribution',{}).get('enabled'):
+                from social import enqueue,wake
+                distribution_root=Path(config['video']['state_dir']).expanduser().parent
+                deliveries=[]
+                for summary,job in zip(new,jobs):
+                    if job['status']!='ready_for_review':continue
+                    try:
+                        delivery=enqueue(distribution_root,wp.get(f"posts/{summary['id']}?context=edit")[0],job,cycle['mode'])
+                        deliveries.append({'post_id':summary['id'],'status':'queued','platforms':list(delivery.get('platforms',{}))})
+                    except Exception as error:
+                        deliveries.append({'post_id':summary['id'],'status':'blocked','reason':type(error).__name__})
+                        notify(root,'social_enqueue_failed','El video está listo, pero no pudo entrar a distribución. Revisa daily-status.json.')
+                status['social_distribution']=deliveries
+                if any(d['status']=='queued' for d in deliveries):status['social_worker_signaled']=wake(distribution_root)
         write(success_path(root),{'date':day,'verified_at':now().isoformat(),'post_ids':[p['id'] for p in new],'kind':'worker_verified' if new else 'reviewed_no_story'})
         status.update(stage='verified' if new else 'reviewed_no_story',status='ok',scheduled=new,worker_exit_code=0)
     except Exception as error:

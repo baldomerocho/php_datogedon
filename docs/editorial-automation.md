@@ -182,3 +182,33 @@ antes de la normalización final a -16 LUFS. Experiencias conserva la entrada
 tranquila, sin identificador sonoro. Ambas duran un segundo sobre voz existente.
 Las revisiones se renderizan en otra carpeta; una actualización del renderer
 no sobrescribe trabajos ya publicados, programados o en proceso de distribución.
+
+### Distribución automática después del render
+
+`video.distribution.enabled` activa una cola durable en
+`videos/distribution/outbox.json`. Tras verificar artículo y MP4, el runtime
+registra un trabajo por artículo y despierta `com.datogedon.social-publisher`.
+El publicador vuelve a comprobar artículo público, enlace HTTP y hash del maestro;
+el artículo no depende de que las plataformas estén disponibles.
+
+Cada plataforma conserva su estado, intentos, URL y prueba de interfaz. No se
+requiere aprobación humana por pieza. Un proceso interrumpido se concilia con el
+mismo borrador/URL; no se vuelve a cargar automáticamente. Un fallo de identidad
+o inicio de sesión queda bloqueado con causa y aviso local. Hay como máximo tres
+intentos de conciliación, con plazo persistido de 20 minutos. Las ventanas de
+recuperación son a las 06:12, 09:12, 11:12, 13:12, 15:12 y 18:12; no hay sondeo
+continuo. El cierre de un trabajo consulta también las nuevas entradas recibidas.
+
+`com.datogedon.social-browser-relay` mantiene una conexión MCP local de Chrome,
+con socket Unix privado y permiso 0600. Solo expone herramientas de publicación
+y páginas de TikTok, YouTube e Instagram; el operador confirma además la cuenta
+concreta en la interfaz. Los archivos y credenciales de sesiones no se exportan.
+El perfil se abre mediante el lanzador que valida el correo y Profile 7. Chrome
+puede pedir autorización inicial de control o renovar un login: eso no equivale
+a una aprobación editorial. El Mac debe estar activo para ejecutar estos procesos.
+
+Las referencias de videos confirmados se añaden al artículo original al cerrar
+el trabajo. Un fallo al enlazar no revierte una publicación social; queda pendiente
+para conciliación. Los registros históricos de distribución se conservan. Para
+pausar nuevas entregas, desactivar `video.distribution.enabled`; no borrar la cola
+ni volver a subir publicaciones inciertas.

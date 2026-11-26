@@ -333,6 +333,70 @@ class GeminiAudio(unittest.TestCase):
             with self.assertRaises(SpeechError):credentials(env)
 
 
+class SocialDistribution(unittest.TestCase):
+    def fixture(self,root):
+        import hashlib
+        from social import enqueue
+        write(root/'editorial-config.json',{'video':{'distribution':{'enabled':True}}})
+        output=root/'output';output.mkdir();(output/'video.mp4').write_bytes(b'verified-synthetic-master')
+        post={'id':1,'status':'publish','link':'https://datogedon.com/synthetic/','title':{'raw':'Synthetic headline'}}
+        video={'post_id':1,'status':'ready_for_review','article_url':post['link'],'output':str(output),
+               'video_sha256':hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()}
+        return post,video,enqueue(root,post,video,'news')
+    def test_outbox_is_durable_idempotent_and_rejects_a_different_master(self):
+        import hashlib
+        from social import enqueue,location
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);post,video,job=self.fixture(root);before=(location(root)/'outbox.json').read_bytes()
+            self.assertEqual(enqueue(root,post,video,'news'),job)
+            self.assertEqual((location(root)/'outbox.json').read_bytes(),before)
+            (Path(video['output'])/'video.mp4').write_bytes(b'changed');video['video_sha256']=hashlib.sha256(b'changed').hexdigest()
+            with self.assertRaises(ValueError):enqueue(root,post,video,'news')
+    def test_existing_public_platform_is_not_uploaded_again(self):
+        from social import enqueue,location,eligible
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);post,video,_=self.fixture(root);(location(root)/'outbox.json').unlink()
+            video['platforms']={'youtube':{'status':'published','url':'https://www.youtube.com/shorts/abcdefghijk'}}
+            job=enqueue(root,post,video,'news');self.assertFalse(eligible(job['platforms']['youtube']));self.assertTrue(eligible(job['platforms']['tiktok']))
+    def test_platform_receipt_cannot_claim_success_without_identity_and_public_proof(self):
+        from social import record,location
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);self.fixture(root)
+            with self.assertRaises(ValueError):record(root,1,'youtube','published','https://www.youtube.com/shorts/abcdefghijk',{})
+            self.assertEqual(read(location(root)/'outbox.json')['jobs']['1']['platforms']['youtube']['status'],'pending')
+            with self.assertRaises(ValueError):record(root,1,'tiktok','draft','https://www.tiktok.com/@other/video/123')
+    def test_confirmed_receipt_is_independent_and_its_url_cannot_change(self):
+        from social import record,location,CHANNEL
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);self.fixture(root);proofpath=root/'Movies/Datogedon/review/proof.txt';proofpath.parent.mkdir(parents=True);proofpath.write_text('Synthetic Studio publication confirmation')
+            proof={key:True for key in ['owner_verified','public_verified','ai_label_verified','caption_verified','playback_verified']}
+            proof.update(channel_id=CHANNEL,snapshot_path=str(proofpath))
+            with patch('social.Path.home',return_value=root):record(root,1,'youtube','published','https://www.youtube.com/shorts/abcdefghijk',proof)
+            job=read(location(root)/'outbox.json')['jobs']['1'];self.assertEqual(job['platforms']['youtube']['status'],'published');self.assertEqual(job['platforms']['instagram']['status'],'pending')
+            with self.assertRaises(ValueError):record(root,1,'youtube','draft','https://www.youtube.com/shorts/otherid1234')
+    def test_active_or_uncertain_attempt_waits_for_its_persisted_deadline(self):
+        from social import eligible
+        current=datetime(2026,11,26,12,tzinfo=TZ)
+        with patch('social.now',return_value=current):
+            self.assertFalse(eligible({'status':'in_progress','attempts':1,'next_attempt_at':'2026-11-26T12:20:00-06:00'}))
+            self.assertTrue(eligible({'status':'uncertain','attempts':1,'next_attempt_at':'2026-11-26T11:20:00-06:00'}))
+            self.assertFalse(eligible({'status':'uncertain','attempts':3}))
+    def test_unavailable_article_blocks_social_without_launching_browser_or_affecting_article(self):
+        from social import run,location
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);self.fixture(root)
+            with patch('social.WordPress'),patch('social.verify_article',side_effect=ValueError('Article unavailable')),patch('social.subprocess.Popen') as worker,patch('social.notify'):
+                report=run(root);worker.assert_not_called()
+            self.assertEqual(report['status'],'pending');self.assertEqual(len(report['pending']),3)
+            self.assertTrue(all(e['status']=='blocked' for e in read(location(root)/'outbox.json')['jobs']['1']['platforms'].values()))
+    def test_social_installer_uses_event_wakeup_and_bounded_calendar_recovery(self):
+        import importlib.util
+        spec=importlib.util.spec_from_file_location('installer',Path(__file__).resolve().parents[1]/'editorial/install-mac.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        definitions=module.social_plists(Path('/synthetic'),'/python',Path('/runtime'),'/node')
+        worker=next(d for name,d in definitions if name.endswith('publisher'))
+        self.assertNotIn('StartInterval',worker);self.assertNotIn('KeepAlive',worker)
+        self.assertEqual([item['Hour'] for item in worker['StartCalendarInterval']],[6,9,11,13,15,18])
+
 class VideoFinishing(unittest.TestCase):
     def test_logo_consumes_body_visual_time_without_delaying_narration(self):
         from video_finish import intro_timeline,outro_timeline

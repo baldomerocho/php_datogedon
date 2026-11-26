@@ -135,6 +135,8 @@ def enqueue(root,post,config):
     state=Path(config['state_dir']).expanduser();state.mkdir(parents=True,exist_ok=True)
     queue_path=state/'queue.json';queue=read(queue_path,{'jobs':{}});key=str(post['id'])
     previous=queue['jobs'].get(key,{})
+    if key in read(state/'distribution/outbox.json',{'jobs':{}})['jobs']:
+        return previous
     if previous.get('published') or any(p.get('status') in ['published','scheduled','publishing','shared_pending_permalink','under_review'] for p in previous.get('platforms',{}).values()):
         return previous
     brief_path=root/'private'/f"video-brief-{post['id']}.json"
