@@ -4,6 +4,7 @@ from array import array
 from pathlib import Path
 PREPROCESS='highpass=f=70,acompressor=threshold=0.125:ratio=1.8:attack=15:release=130:makeup=1:knee=2.828'
 TARGET={'integrated_lufs':-16.0,'true_peak_dbtp':-1.5,'loudness_range_lu':7.0}
+VOICE_ENCODE_FILTER='pan=stereo|c0=0.70710678*c0|c1=0.70710678*c0'
 
 def branding_spec(config):
     if not config or not config.get('enabled'):return {'enabled':False}
@@ -110,13 +111,13 @@ def parse_measurements(stderr):
     return result
 
 def measure(path,preprocess=''):
-    chain=(preprocess+',' if preprocess else '')+'loudnorm=I=-16:TP=-1.5:LRA=7:print_format=json'
+    chain=(preprocess+',' if preprocess else '')+f'loudnorm=I=-16:TP={TARGET["true_peak_dbtp"]}:LRA=7:print_format=json'
     result=subprocess.run(['ffmpeg','-hide_banner','-nostats','-i',str(path),'-af',chain,'-f','null','-'],capture_output=True,text=True,check=True,timeout=60)
     return parse_measurements(result.stderr)
 
 def master(source,target):
     measured=measure(source,PREPROCESS)
-    chain=PREPROCESS+(',loudnorm=I=-16:TP=-1.5:LRA=7:measured_I={input_i}:measured_TP={input_tp}:measured_LRA={input_lra}:measured_thresh={input_thresh}:offset={target_offset}:linear=true:print_format=json'.format(**measured))
+    chain=PREPROCESS+((',loudnorm=I=-16:TP='+str(TARGET['true_peak_dbtp'])+':LRA=7:measured_I={input_i}:measured_TP={input_tp}:measured_LRA={input_lra}:measured_thresh={input_thresh}:offset={target_offset}:linear=true:print_format=json').format(**measured))
     subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(source),'-af',chain,'-ar','48000','-ac','1','-c:a','pcm_s16le',str(target)],capture_output=True,check=True,timeout=60)
     return {'target':TARGET,'processing':{'high_pass_hz':70,'compressor_ratio':1.8,'two_pass_normalization':True,'music':False},'preprocessed_input':measured,'mastered_wav':measure(target)}
 

@@ -121,6 +121,7 @@ def render(brief,output,tts_config,branding=None):
     if not 20<=cursor<=150:raise ValueError('Video must be between 20 and 150 seconds')
     with wave.open(str(output/'narration.wav'),'wb') as out:
         out.setnchannels(1);out.setsampwidth(2);out.setframerate(sample_rate);out.writeframes(b''.join(audio_parts))
+    (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     scenes=intro_timeline(scenes,branding)
     production,ident=news_ident(output/'narration.wav',output/'narration-production.wav',scenes[0]['duration'],branding['enabled'] and branding['mode']=='news')
     scenes=outro_timeline(scenes,branding)
@@ -191,7 +192,7 @@ def enqueue(root,post,config):
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'renderer_version':7},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'renderer_version':8},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}

@@ -7,7 +7,7 @@ def public_guides(state):
     try:videos=read(state/'extended-catalog.json',{'videos':{}}).get('videos',{})
     except (ValueError,OSError,AttributeError):return []
     if not isinstance(videos,dict):return []
-    return [v for v in videos.values() if isinstance(v,dict) and isinstance(v.get('post_id'),int) and isinstance(v.get('title'),str) and v.get('status')=='published' and v.get('owner_verified') is True
+    return [{k:v[k] for k in ['post_id','title','url','channel_id','status','owner_verified','public_verified']} for v in videos.values() if isinstance(v,dict) and isinstance(v.get('post_id'),int) and isinstance(v.get('title'),str) and v.get('status')=='published' and v.get('owner_verified') is True
             and v.get('public_verified') is True and v.get('channel_id')==CHANNEL
             and re.fullmatch(r'https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}',v.get('url',''))]
 

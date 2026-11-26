@@ -66,11 +66,12 @@ def frame(base,items,time):
 
 def encode(output,scenes,visuals):
     from PIL import Image
+    from video_finish import VOICE_ENCODE_FILTER
     count=sum(s['frame_count'] for s in scenes)
     command=['ffmpeg','-hide_banner','-loglevel','error','-y','-f','rawvideo','-pixel_format','rgb24',
              '-video_size','1080x1920','-framerate','30','-i','pipe:0','-i','narration-mastered.wav',
              '-vf','subtitles=captions.ass,format=yuv420p','-frames:v',str(count),
-             '-c:v','libx264','-preset','veryfast','-crf','21','-c:a','aac','-b:a','160k',
+             '-c:v','libx264','-preset','veryfast','-crf','21','-af',VOICE_ENCODE_FILTER,'-c:a','aac','-b:a','160k',
              '-ar','48000','-movflags','+faststart','video.mp4']
     process=subprocess.Popen(command,cwd=output,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     try:

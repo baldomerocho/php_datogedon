@@ -1,7 +1,7 @@
 """Landscape explanatory guides with original diagrams and uninterrupted narration."""
 import argparse,hashlib,json,math,subprocess,wave
 from pathlib import Path
-from video_finish import master,verify_mastering
+from video_finish import master,verify_mastering,VOICE_ENCODE_FILTER
 W,H,FPS=1920,1080,30
 WHITE='#fafafa';MUTED='#bdbdbd';PANEL='#242424';BG='#111111';ACCENT='#ff966f'
 
@@ -85,6 +85,8 @@ def canvas(brief,scene,index,local_time,logo):
 
 def render(brief,output,branding):
     from PIL import Image,ImageDraw,ImageFont,ImageOps
+    publication=output/'youtube-publication.json'
+    if publication.exists() and json.loads(publication.read_text()).get('status')=='published':raise ValueError('Published guide master is immutable; use a separate revision directory')
     data=json.loads((output/'segments.json').read_text());duration=data['duration'];segments=data['segments']
     if not 120<=duration<=900:raise ValueError('An extended guide must contain 2–15 minutes of real narration')
     with wave.open(str(output/'narration.wav'),'rb') as stream:
@@ -92,7 +94,7 @@ def render(brief,output,branding):
     logo=Image.open(branding['logo_path']).convert('RGBA');logo=ImageOps.contain(logo,(100,100),Image.Resampling.LANCZOS)
     audio=master(output/'narration.wav',output/'narration-mastered.wav')
     count=round(duration*FPS)
-    command=['ffmpeg','-v','error','-y','-f','rawvideo','-pixel_format','rgb24','-video_size',f'{W}x{H}','-framerate',str(FPS),'-i','pipe:0','-i','narration-mastered.wav','-frames:v',str(count),'-c:v','libx264','-preset','veryfast','-crf','21','-pix_fmt','yuv420p','-af','volume=-0.35dB','-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart','video.mp4']
+    command=['ffmpeg','-v','error','-y','-f','rawvideo','-pixel_format','rgb24','-video_size',f'{W}x{H}','-framerate',str(FPS),'-i','pipe:0','-i','narration-mastered.wav','-frames:v',str(count),'-c:v','libx264','-preset','veryfast','-crf','21','-pix_fmt','yuv420p','-af',VOICE_ENCODE_FILTER,'-c:a','aac','-b:a','160k','-ar','48000','-movflags','+faststart','video.mp4']
     process=subprocess.Popen(command,cwd=output,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
     scene_starts={};scene_ends={}
     for segment in segments:

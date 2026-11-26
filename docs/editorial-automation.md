@@ -236,3 +236,12 @@ diagramas originales animados y narración existente sin pausas de marca. Verifi
 duración, cantidad de fotogramas y mastering. El guion y la evidencia quedan en el
 estado privado; las referencias de la guía completa y del Short pueden coexistir
 en el mismo artículo sin sustituir las publicaciones anteriores.
+
+La entrega AAC del renderer v8 usa voz centrada en estéreo con paneo de potencia
+constante: conserva la energía integrada y evita los picos observados con el
+codificador mono. Se mantienen -16 LUFS como objetivo y la comprobación del AAC
+final a un máximo de -1 dBTP. La regresión se verificó con los dos audios reales
+que habían fallado, sin generar nuevamente las voces. El registro de uso TTS se
+escribe antes de codificar para conservarlo si falla una comprobación posterior.
+Las guías con `youtube-publication.json` confirmado no se renderizan de nuevo en
+la misma carpeta; las revisiones tienen su propia salida.
