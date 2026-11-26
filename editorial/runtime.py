@@ -103,13 +103,20 @@ class WordPress:
             if page>=pages:return result
             page+=1
 
+def same_publication_date(expected,actual):
+    try:
+        dates=[datetime.fromisoformat(value) for value in [expected,actual]]
+        dates=[d if d.tzinfo else d.replace(tzinfo=TZ) for d in dates]
+        return dates[0]==dates[1]
+    except (TypeError,ValueError):return False
+
 def reconcile(root,wp):
     queue=read(root/'queue.json');snapshot=[];issues=[];media={}
     for item in queue['posts']:
         post,_=wp.get(f"posts/{int(item['post_id'])}?context=edit")
         old=item.get('status');item['status']={'publish':'published','future':'scheduled'}.get(post['status'],post['status'])
         item['remote_status']=post['status'];item['remote_checked_at']=now().isoformat();item['remote_date']=post['date'].replace('T',' ')
-        if item.get('date') and item['date']!=item['remote_date']:issues.append({'post_id':post['id'],'issue':'fecha remota distinta; no se modificó'})
+        if item.get('date') and not same_publication_date(item['date'],post['date']):issues.append({'post_id':post['id'],'issue':'fecha remota distinta; no se modificó'})
         if post['status']=='future':
             if post['featured_media'] and post['featured_media'] not in media:media[post['featured_media']]=wp.get(f"media/{post['featured_media']}?context=edit")[0]
             check=quality(post,media);item['quality_check']=check

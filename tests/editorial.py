@@ -191,6 +191,19 @@ class NewsRuntime(unittest.TestCase):
     def test_wrong_author_cannot_be_marked_success(self):self.run_case(1)
 
 
+class PublicationDateReconciliation(unittest.TestCase):
+    def test_equivalent_formats_do_not_block_but_real_changes_do(self):
+        from runtime import reconcile
+        class WP:
+            def get(self,*args):return {'id':1,'status':'publish','date':'2026-11-25T13:36:32','date_gmt':'2026-11-25T19:36:32','featured_media':1},1
+            def posts(self,*args):return []
+        for date,blocked in [('2026-11-25T13:36:32',False),('2026-11-25 13:36:32',False),('2026-11-25T19:36:32Z',False),('2026-11-25T13:36:33',True),('invalid',True)]:
+            with self.subTest(date=date),tempfile.TemporaryDirectory() as directory:
+                root=Path(directory);write(root/'queue.json',{'posts':[{'post_id':1,'date':date}]});write(root/'editorial-config.json',{'publication_schedule':{'catch_up':True}})
+                result=reconcile(root,WP());self.assertEqual(bool(result['issues']),blocked)
+                self.assertEqual(read(root/'queue.json')['posts'][0]['date'],date)
+
+
 class VideoDrafts(unittest.TestCase):
     def brief(self):
         return {'post_id':1,'account':'@datogedon','article_url':'https://datogedon.com/synthetic/','sources':['https://example.invalid/source'],'topic_label':'Synthetic technology','date_label':'Synthetic date','source_label':'Synthetic source','scenes':[{'headline':'A concise synthetic headline','visual':'context','visual_data':{'title':'Context','labels':['One','Two']},'chunks':['A synthetic description explaining a verified change and its scope without adding unsupported claims.']} for _ in range(3)]}
