@@ -105,6 +105,22 @@ def link_references(root):
                 latest=read(folder/'outbox.json');target=latest['jobs'][key]['platforms'][platform]
                 target['blog_reference']='linked' if result.returncode==0 else 'pending';write(folder/'outbox.json',latest)
 
+def sync_receipts(root):
+    """Mirror confirmed receipts without replacing another render's queue entry."""
+    jobs=read(location(root)/'outbox.json',{'jobs':{}})['jobs']
+    queue_path=root/'videos/queue.json'
+    with queue_path.with_name('queue-state.lock').open('a+') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX);queue=read(queue_path,{'jobs':{}})
+        for key,job in jobs.items():
+            target=queue['jobs'].get(key)
+            if not target or target.get('video_sha256')!=job['video_sha256']:continue
+            for platform,entry in job['platforms'].items():
+                if entry['status'] in ['pending','in_progress']:continue
+                target.setdefault('platforms',{})[platform]=dict(entry)
+            target['published']=any(e.get('status')=='published' for e in target.get('platforms',{}).values())
+            write(Path(job['output'])/'automatic-distribution.json',job)
+        write(queue_path,queue)
+
 def run(root):
     folder=location(root);folder.mkdir(parents=True,exist_ok=True,mode=0o700)
     lock=(folder/'worker.lock').open('a+')
@@ -117,6 +133,7 @@ def run(root):
         processed=[]
         try:link_references(root)
         except Exception:pass
+        sync_receipts(root)
         while True:
             jobs=read(folder/'outbox.json',{'jobs':{}})['jobs']
             candidates=[j for j in jobs.values() if any(eligible(e) for e in j['platforms'].values())]
@@ -139,7 +156,7 @@ def run(root):
                     write(folder/'outbox.json',latest)
                 write(work/'job.json',{**job,'selected_platforms':selected})
                 source=Path(__file__).resolve().parent
-                prompt=(source/'social-publication.txt').read_text()+f'\n\nEJECUCIÓN AUTOMÁTICA AUTORIZADA\nLee job.json. Publica únicamente post_id={key} en selected_platforms. No necesitas aprobación humana. No generes ni modifiques videos/artículos.\nBrowser helper: {sys.executable} {source/"browser-call.py"} JSON\nRegistrar resultado: {sys.executable} {source/"social.py"} --state-dir {root} record --post-id {key} --platform PLATFORM --status STATUS [--url URL] [--proof ARCHIVO_JSON] [--reason TEXTO]\nPruebas UI en ~/Movies/Datogedon/review/social-{key}-PLATFORM.txt. Usa command operation tools para descubrir schemas.\nNo edites outbox.json directamente. Cada plataforma es independiente; registrar su resultado antes de pasar a la siguiente. Si mode=reconcile_only, está prohibido subir de nuevo: localizar/publicar el mismo borrador o verificar URL ya asignada. Si la sesión no permite confirmar identidad, registra blocked y sigue con otras plataformas.\nPrimero consulta list_pages en el relay. No inicies otro session.mjs ni otro Chrome MCP. Antes de CARGAR registra draft sin URL; desde ese momento un corte exige conciliación, nunca una segunda carga. Guardar URL tan pronto esté asignada. Todo publicado requiere proof.json con owner_verified/public_verified/ai_label_verified/caption_verified/playback_verified=true y snapshot_path existente; YouTube channel_id verificado, otros account=@datogedon. No inventes pruebas.\nSi encuentras video ya publicado aunque el registro local no lo conozca, verifica y registra el existente sin duplicarlo. Si no puedes resolver una plataforma, registra blocked con la causa exacta y sigue; no abandones las demás.\n'
+                prompt=(source/'social-publication.txt').read_text()+f'\n\nEJECUCIÓN AUTOMÁTICA AUTORIZADA\nLee job.json. Publica únicamente post_id={key} en selected_platforms. No necesitas aprobación humana. No generes ni modifiques videos/artículos.\nBrowser helper: {sys.executable} {source/"browser-call.py"} JSON\nJSON ejemplo: {{"tool":"list_pages","args":{{}}}}. Para schemas: {{"operation":"tools","names":["click","upload_file"]}}.\nRegistrar resultado: {sys.executable} {source/"social.py"} --state-dir {root} record --post-id {key} --platform PLATFORM --status STATUS [--url URL] [--proof ARCHIVO_JSON] [--reason TEXTO]\nPruebas UI en ~/Movies/Datogedon/review/social-{key}-PLATFORM.txt.\nNo edites outbox.json directamente. Cada plataforma es independiente; registrar su resultado antes de pasar a la siguiente. Si mode=reconcile_only, está prohibido subir de nuevo: localizar/publicar el mismo borrador o verificar URL ya asignada. Si la sesión no permite confirmar identidad, registra blocked y sigue con otras plataformas.\nPrimero consulta list_pages en el relay. No inicies otro session.mjs ni otro Chrome MCP. No leas archivos de claves, cookies, conversaciones ni sesiones de asistentes. Antes de CARGAR registra draft sin URL; desde ese momento un corte exige conciliación, nunca una segunda carga. Guardar URL tan pronto esté asignada. Todo publicado requiere proof.json con owner_verified/public_verified/ai_label_verified/caption_verified/playback_verified=true y snapshot_path existente; YouTube channel_id verificado, otros account=@datogedon. No inventes pruebas.\nSi encuentras video ya publicado aunque el registro local no lo conozca, verifica y registra el existente sin duplicarlo. Si no puedes resolver una plataforma, registra blocked con la causa exacta y sigue; no abandones las demás.\n'
                 with (work/'worker.log').open('a') as log:
                     os.chmod(log.name,0o600);process=subprocess.Popen(command(work,root),stdin=subprocess.PIPE,stdout=log,stderr=log,text=True,start_new_session=True)
                     try:process.communicate(prompt,timeout=2100)
@@ -165,6 +182,7 @@ def run(root):
             # A failed reference update must not undo a confirmed platform publication.
             try:link_references(root)
             except Exception:pass
+            sync_receipts(root)
         jobs=read(folder/'outbox.json',{'jobs':{}})['jobs'];pending=[{'post_id':key,'platform':p,'status':e['status'],'reason':e.get('reason')} for key,j in jobs.items() for p,e in j['platforms'].items() if e['status'] not in TERMINAL or e.get('status')=='published' and e.get('blog_reference')!='linked']
         report={'checked_at':now().isoformat(),'processed':processed,'pending':pending,'status':'pending' if pending else 'ok'};write(folder/'status.json',report)
         if pending:notify(root,'social_pending','Hay videos pendientes de distribución. Revisa videos/distribution/status.json.')

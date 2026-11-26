@@ -396,6 +396,16 @@ class SocialDistribution(unittest.TestCase):
         worker=next(d for name,d in definitions if name.endswith('publisher'))
         self.assertNotIn('StartInterval',worker);self.assertNotIn('KeepAlive',worker)
         self.assertEqual([item['Hour'] for item in worker['StartCalendarInterval']],[6,9,11,13,15,18])
+    def test_render_completion_and_social_receipts_preserve_each_others_jobs(self):
+        from social import location,sync_receipts
+        from video import store_job
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);_,video,_=self.fixture(root)
+            path=root/'videos/queue.json';write(path,{'jobs':{'1':video,'2':{'status':'rendering'}}})
+            outbox=read(location(root)/'outbox.json');outbox['jobs']['1']['platforms']['tiktok'].update(status='published',url='https://www.tiktok.com/@datogedon/video/123',blog_reference='linked');write(location(root)/'outbox.json',outbox)
+            sync_receipts(root);self.assertTrue(read(path)['jobs']['1']['published']);self.assertEqual(read(path)['jobs']['2']['status'],'rendering')
+            store_job(path,'2',{'status':'ready_for_review'})
+            self.assertEqual(read(path)['jobs']['1']['platforms']['tiktok']['url'],'https://www.tiktok.com/@datogedon/video/123')
 
 class VideoFinishing(unittest.TestCase):
     def test_logo_consumes_body_visual_time_without_delaying_narration(self):

@@ -1,5 +1,5 @@
 """Render an editorial vertical-video brief locally. Never uploads or posts to TikTok."""
-import argparse,hashlib,json,os,re,signal,subprocess,sys,wave
+import argparse,fcntl,hashlib,json,os,re,signal,subprocess,sys,wave
 from pathlib import Path
 
 def validate(brief):
@@ -129,6 +129,12 @@ def render(brief,output,tts_config,branding=None):
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
+def store_job(path,key,job):
+    from runtime import read,write
+    with path.with_name('queue-state.lock').open('a+') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        latest=read(path,{'jobs':{}});latest['jobs'][key]=job;write(path,latest)
+
 def enqueue(root,post,config):
     from runtime import read,write,now
     if post['status']!='publish':raise ValueError('Video drafts require a published article')
@@ -142,12 +148,12 @@ def enqueue(root,post,config):
     brief_path=root/'private'/f"video-brief-{post['id']}.json"
     output=Path(config['output_dir']).expanduser()/f"{post['id']}-{re.sub('[^a-zA-Z0-9_-]','-',post.get('slug','article'))}"
     if not brief_path.exists():
-        queue['jobs'][key]={'post_id':post['id'],'status':'needs_brief','article_url':post['link'],'updated_at':now().isoformat()};write(queue_path,queue);return queue['jobs'][key]
+        queue['jobs'][key]={'post_id':post['id'],'status':'needs_brief','article_url':post['link'],'updated_at':now().isoformat()};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
     try:
         brief=validate(read(brief_path));digest=hashlib.sha256(brief_path.read_bytes()).hexdigest()
         if brief['post_id']!=post['id'] or brief.get('article_url')!=post['link']:raise ValueError('Brief belongs to a different article')
     except (ValueError,TypeError,KeyError):
-        queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'InvalidBrief','updated_at':now().isoformat(),'published':False};write(queue_path,queue);return queue['jobs'][key]
+        queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'InvalidBrief','updated_at':now().isoformat(),'published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
     from video_finish import branding_spec
     try:
         branding=branding_spec(config.get('branding'))
@@ -156,12 +162,12 @@ def enqueue(root,post,config):
             branding['mode']=mode
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
-        queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};write(queue_path,queue);return queue['jobs'][key]
+        queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
     spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':6},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}
-    queue['jobs'][key]=job;write(queue_path,queue)
+    store_job(queue_path,key,job)
     tts_config_path=state/'voice-config.json';write(tts_config_path,config['tts'])
     branding_config_path=state/'branding-config.json';write(branding_config_path,branding)
     process=None
@@ -180,7 +186,7 @@ def enqueue(root,post,config):
             try:process.wait(timeout=10)
             except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
         job.update(status='failed',error=type(error).__name__,finished_at=now().isoformat())
-    write(queue_path,queue);return job
+    store_job(queue_path,key,job);return job
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--brief',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--tts-config',type=Path,required=True);p.add_argument('--branding-config',type=Path);a=p.parse_args()
