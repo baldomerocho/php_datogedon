@@ -358,6 +358,38 @@ class SocialDistribution(unittest.TestCase):
             root=Path(directory);post,video,_=self.fixture(root);(location(root)/'outbox.json').unlink()
             video['platforms']={'youtube':{'status':'published','url':'https://www.youtube.com/shorts/abcdefghijk'}}
             job=enqueue(root,post,video,'news');self.assertFalse(eligible(job['platforms']['youtube']));self.assertTrue(eligible(job['platforms']['tiktok']))
+    def test_new_tiktok_receipt_requires_verified_native_favorite(self):
+        from social import record,location
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);_,_,job=self.fixture(root)
+            self.assertTrue(job['tiktok_music_policy']['required'])
+            proofpath=root/'Movies/Datogedon/review/proof.txt';proofpath.parent.mkdir(parents=True);proofpath.write_text('Synthetic sound selection and volume evidence')
+            proof={key:True for key in ['owner_verified','public_verified','ai_label_verified','caption_verified','playback_verified']}
+            proof.update(account='@datogedon',snapshot_path=str(proofpath))
+            url='https://www.tiktok.com/@datogedon/video/123'
+            with patch('social.Path.home',return_value=root):
+                with self.assertRaisesRegex(ValueError,'music evidence'):record(root,1,'tiktok','published',url,proof)
+                self.assertEqual(read(location(root)/'outbox.json')['jobs']['1']['platforms']['tiktok']['status'],'pending')
+                proof['music']={'source':'tiktok_favorites','favorite_title':'Closed Slip','native_title':'Synthetic title',
+                    'native_sound_id':'synthetic-id','version':'Synthetic artist/version','gain_db':-12,
+                    'selection_reason':'General ambient background','volume_evidence':str(proofpath),
+                    'full_duration_verified':True,'voice_preserved':True,'mix_checked':False}
+                with self.assertRaisesRegex(ValueError,'mix_checked'):record(root,1,'tiktok','published',url,proof)
+                proof['music']['mix_checked']=True
+                record(root,1,'tiktok','published',url,proof)
+            entry=read(location(root)/'outbox.json')['jobs']['1']['platforms']['tiktok']
+            self.assertEqual(entry['proof']['music']['gain_db'],-12)
+            self.assertEqual(entry['status'],'published')
+    def test_tiktok_music_rejects_unknown_tracks_and_unverified_gains(self):
+        from tiktok_music import verify
+        music={'source':'tiktok_favorites','favorite_title':'Shard Pact','native_title':'Synthetic title',
+            'native_sound_id':'synthetic-id','version':'Synthetic version','gain_db':-14,
+            'selection_reason':'Quiet electro','volume_evidence':'Synthetic native control',
+            'full_duration_verified':True,'voice_preserved':True,'mix_checked':True}
+        verify(music)
+        for change in [{'favorite_title':'unknown'}, {'gain_db':14}, {'gain_db':float('nan')},
+                       {'gain_db':True}, {'native_sound_id':''}, {'full_duration_verified':False}]:
+            with self.subTest(change=change),self.assertRaises(ValueError):verify({**music,**change})
     def test_platform_receipt_cannot_claim_success_without_identity_and_public_proof(self):
         from social import record,location
         with tempfile.TemporaryDirectory() as directory:

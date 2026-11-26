@@ -39,6 +39,48 @@ Esperar procesamiento y comprobaciones; elegir Público para noticia ya publicad
 o programación elegible para experiencia. Verificar confirmación de publicación,
 URL /shorts/ID, canal, título y reproducción. Una URL asignada no prueba visibilidad.
 
+TikTok: checklist obligatorio de música de fondo
+Para cada NUEVA carga de Datogedon, seguir tiktok_music_policy de job.json. El
+maestro sigue siendo voz sola para reutilizarlo en YouTube e Instagram. Añadir
+el sonido nativo de TikTok ANTES de publicar; no descargar ni trasladar su música.
+1. Confirmar @datogedon y comprobar que no existe ya esta publicación.
+2. Abrir Sonidos > Favoritos. Opción general: Closed Slip a -12 dB. Shard Pact
+   a -14 dB para electro tranquilo/lento y melancólico; Bonefire Circle a -16 dB
+   solo para temas alegres; The Turnin of Titans a -16 dB para épica/suspenso
+   pertinente. No elegir drama por defecto ni presentar favoritos como tendencias.
+3. Verificar título REAL, artista/versión e ID nativo: los nombres del usuario
+   son etiquetas de búsqueda, no IDs. No elegir una versión homónima a ciegas.
+4. Ajustar solo el sonido añadido al valor indicado, conservar la voz original
+   activa. Verificar el valor en el control; no tratar porcentaje como dB ni
+   inventar conversiones. Guardar evidencia del control y selección en snapshot.
+5. Comprobar mezcla y cobertura del principio, centro y final: voz clara, sin
+   silencios por terminar la pista. El usuario informa que estos favoritos duran
+   al menos 3 minutos: margen para los cortos actuales, pero verificar que el
+   tramo utilizable/seleccionado en TikTok cubra la duración real del video.
+   No asegurar escucha en móvil si no ocurrió.
+   Si no hay capacidad de revisar la mezcla, no inventar mix_checked.
+6. Confirmar sonido aún seleccionado y guardar evidencia ANTES de publicar.
+   Si Favoritos/volumen no están disponibles en web, falta la versión o no se
+   puede verificar la mezcla, conservar el mismo borrador y registrar blocked
+   con causa precisa. No publicar automáticamente sin música; continuar YouTube
+   e Instagram. No duplicar ni eliminar publicaciones antiguas para añadir audio.
+7. Después de publicar, verificar URL pública y pista atribuida. proof.json debe
+   incluir music={source:"tiktok_favorites",favorite_title:"Closed Slip",
+   native_title:"TÍTULO REAL",native_sound_id:"ID REAL",version:"ARTISTA/VERSIÓN",
+   gain_db:-12,selection_reason:"Afinidad con el tema",volume_evidence:"Control
+   observado y archivo de evidencia",full_duration_verified:true,
+   voice_preserved:true,mix_checked:true}. Los valores son pruebas reales, no
+   defaults: sustituir título/ganancia según favorito. No declarar publicado si
+   falta un requisito; el coordinador valida este recibo para trabajos nuevos.
+8. Mantener el recibo del audio para comparar a 24 h, 72 h y 7 días desde la
+   publicación: vistas, tiempo medio, finalización, compartidos y seguidores si
+   existen. Datos no disponibles son null. Comparar piezas de tema/duración
+   similar y antigüedad equivalente; no atribuir cambios solo a la música.
+El artículo, render y otros destinos no dependen de este checklist de TikTok.
+Si reconcile_only descubre una publicación antigua ya pública sin música, no
+republicar para cumplir la política: registrar la URL como submitted y la causa
+blocked para revisión, conservando evidencias y evitando una segunda carga.
+
 Instagram web
 Crear publicación con el maestro. Conservar recorte 9:16 y duración completa;
 Activar sonido debe permanecer encendido. Elegir cover.jpg como portada. Caption

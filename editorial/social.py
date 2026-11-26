@@ -4,6 +4,7 @@ from datetime import datetime,timedelta
 from pathlib import Path
 from urllib.request import Request,urlopen
 from runtime import read,write,now,WordPress,notify
+from tiktok_music import policy as music_policy,verify as verify_music
 PLATFORMS=('tiktok','youtube','instagram')
 CHANNEL='UCUEIkqP0ZYY7R7GEV5wwhvA'
 TERMINAL={'published','scheduled'}
@@ -38,7 +39,8 @@ def enqueue(root,post,video,kind):
             prior=video.get('platforms',{}).get(platform,video.get(platform,{}))
             platforms[platform]=dict(prior) if prior.get('status') in TERMINAL else {'status':'pending','attempts':0}
         job={'post_id':post['id'],'title':post['title'].get('raw',post['title'].get('rendered','')),'article_url':post['link'],
-             'kind':kind,'output':video['output'],'video_sha256':video['video_sha256'],'created_at':now().isoformat(),'platforms':platforms}
+             'kind':kind,'output':video['output'],'video_sha256':video['video_sha256'],'created_at':now().isoformat(),'platforms':platforms,
+             'tiktok_music_policy':music_policy()}
         outbox['jobs'][key]=job;write(folder/'outbox.json',outbox)
     return job
 
@@ -60,6 +62,8 @@ def record(root,post_id,platform,status,url=None,proof=None,reason=None):
         if not artifact.is_relative_to(review) or not artifact.is_file():raise ValueError('Browser proof snapshot required')
     with locked(root) as folder:
         outbox=read(folder/'outbox.json');entry=outbox['jobs'][str(post_id)]['platforms'][platform]
+        if platform=='tiktok' and status=='published' and entry.get('status')!='published' and outbox['jobs'][str(post_id)].get('tiktok_music_policy',{}).get('required'):
+            verify_music(proof.get('music'))
         if entry.get('url') and url and entry['url']!=url:raise ValueError('Remote URL differs; reconcile without uploading again')
         if entry['status']=='published' and status!='published':raise ValueError('Published result is immutable')
         entry.update(status=status,updated_at=now().isoformat())
