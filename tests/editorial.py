@@ -197,6 +197,13 @@ class VideoDrafts(unittest.TestCase):
     def test_real_video_brief_validates_without_external_runtime(self):
         from video import validate
         self.assertEqual(validate(self.brief())['post_id'],1)
+    def test_explanation_can_exceed_old_budget_but_remains_bounded(self):
+        from video import validate
+        b=self.brief()
+        for scene in b['scenes']:scene['chunks']=[' '.join(['detail']*20)+'.']*4
+        self.assertIs(validate(b),b)  # 240 words, still short subtitle chunks.
+        for scene in b['scenes']:scene['chunks'].append(' '.join(['detail']*21)+'.')
+        with self.assertRaises(ValueError):validate(b)
     def test_missing_visual_data_never_reuses_other_news_figures(self):
         from video import validate
         b=self.brief();b['scenes'][0]['visual_data']={}

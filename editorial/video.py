@@ -21,7 +21,7 @@ def validate(brief):
         for chunk in scene['chunks']:
             if not isinstance(chunk,str) or not chunk.strip() or len(chunk)>155:raise ValueError('Short caption chunks required')
     words=sum(len(re.findall(r'\w+',c)) for scene in brief['scenes'] for c in scene['chunks'])
-    if not 40<=words<=180:raise ValueError('Use a concise 40–180 word script')
+    if not 40<=words<=300:raise ValueError('Use a focused 40–300 word script')
     public_text=' '.join(c for scene in brief['scenes'] for c in scene['chunks'])
     if re.search(r'/Users/|/home/|(?:ghp_|sk-proj-|github_pat_)[A-Za-z0-9_-]{20,}',public_text):raise ValueError('Possible private data in video')
     return brief
@@ -103,7 +103,7 @@ def render(brief,output,tts_config,branding=None):
         scenes.append({'file':image.name,'duration':cursor-start,'kind':'hook' if scene_index==0 else 'body'})
         if scene_index==0 and branding['enabled']:
             audio_parts.append(b'\0\0'*round(branding['intro_seconds']*sample_rate));scenes.append({'file':'intro.png','duration':branding['intro_seconds'],'kind':'intro'});cursor+=branding['intro_seconds']
-    if not 20<=cursor<=90:raise ValueError('Video must be between 20 and 90 seconds')
+    if not 20<=cursor<=150:raise ValueError('Video must be between 20 and 150 seconds')
     with wave.open(str(output/'narration.wav'),'wb') as out:
         out.setnchannels(1);out.setsampwidth(2);out.setframerate(sample_rate);out.writeframes(b''.join(audio_parts))
     scenes=outro_timeline(scenes,branding)

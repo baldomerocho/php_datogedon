@@ -34,9 +34,33 @@ en TikTok según el plan de distribución. No agregues efectos ni despedida habl
 Incluye series_title="Noticias de tecnología" para noticias o "Experiencias con IA"
 para relatos personales; el título del tema va en los gráficos de contenido.
 
-Guion de 40–180 palabras, objetivo 40–60 s: hecho relevante, qué cambia, un dato
-con sus límites y una pregunta concreta al público. Sin relleno, dramatización,
-promesas de rendimiento ni voz imitada. Cada chunk es una frase corta
+PRIORIDAD DEL GUION: enseñar una idea completa, no resumir que algo se cambió.
+Para experiencias, concreta el síntoma y el comportamiento inicial, la decisión
+central, cómo opera la solución y por qué resuelve ese problema. Incluye la condición
+o intervención humana que cambió el camino y las decisiones autónomas de la IA
+solo cuando consten en el artículo. Termina con una comprobación o criterio que
+otro desarrollador pueda aplicar y el límite relevante de lo verificado.
+Anonimiza la identidad, no el mecanismo: puedes explicar estados, entradas, salidas,
+orden de pasos y consecuencias sin nombrar la app, sus clientes ni datos privados.
+«Una app cambió su flujo» o «se corrigió un script» no bastan. Por ejemplo, distinguir
+sesión abierta de correo pendiente, o versión calculada de versión leída del paquete,
+aporta contexto técnico que una referencia genérica a la app no proporciona.
+Explica los términos cuando sean necesarios. No enumeres tecnicismos ni comprimas
+todo el artículo: elige una sola decisión y desarrolla su cadena causal.
+En noticias, explica el cambio, su consecuencia práctica y las condiciones que
+limitan su aplicación. En ambos formatos la pregunta al público es OPCIONAL:
+no sustituye la explicación ni añade una escena si solo repite el gancho.
+Antes de entregar, lee únicamente la narración, sin apoyarte en el artículo ni en
+los gráficos: debe entenderse qué fallaba, qué cambió, por qué funciona y qué
+puede comprobar el espectador. Si falta una respuesta, corrige el cuerpo del guion.
+Una explicación editorial no demuestra la motivación histórica de la IA; no
+inventes decisiones, código, pruebas ni motivos para completar el relato.
+
+La duración se deriva de la explicación. Usa 60–90 s cuando el mecanismo lo
+necesite; un caso simple puede ser más corto. Recorta repeticiones, no pasos
+necesarios, y no aceleres la voz para cumplir un tiempo. Límites operativos del
+render: 40–300 palabras y hasta 150 s; no son objetivos ni cuotas que rellenar.
+Sin relleno, dramatización, promesas de rendimiento ni voz imitada. Cada chunk es una frase corta
 <=155 caracteres. Usa oraciones completas; no cortes una frase para ajustar
 subtítulos. Agrupa dos oraciones cortas cuando quepan: mejora la prosodia y reduce
 llamadas de audio. El montaje mide cada fragmento y adapta los subtítulos. Los gráficos
@@ -69,7 +93,7 @@ Mercado prioritario México (MX); contraste secundario Colombia (CO), Argentina
 mercado ni una garantía de distribución hacia otros países. Usa español latino
 conversacional, cercano y ágil: explica como un developer a otro, sin tono de
 noticiero ni modismos mexicanos forzados. Conserva datos, límites y fuentes.
-Gancho concreto, curiosidad y pregunta que invite a opinar, sin sensacionalismo.
+Gancho concreto, explicación útil y cierre práctico, sin sensacionalismo.
 
 PLAN DE DISTRIBUCIÓN PRIVADO, separado del guion y del artículo:
 Después del brief escribe private/video-distribution-ID.json con post_id,
