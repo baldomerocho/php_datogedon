@@ -129,8 +129,11 @@ relanzar publicaciones inciertas sin consultar su estado real.
 
 Los nuevos briefs priorizan México; Colombia, Argentina y España sirven de
 contraste. Español latino informal, sin perder rigor ni forzar regionalismos.
-El gancho, intro de un segundo y outro aprobados se mantienen. El maestro MP4
-conserva la voz normalizada, para añadir el sonido nativo en TikTok después.
+El gancho, intro de un segundo y outro aprobados se mantienen. La intro sustituye
+un segundo de imagen del cuerpo: la narración y los subtítulos continúan, sin
+silencio añadido. El maestro conserva la voz normalizada y, solo en noticias,
+un identificador sonoro original de 480 ms. No incluye música de fondo; los sonidos
+nativos de TikTok se añaden después cuando corresponde.
 
 El redactor prepara `private/video-distribution-ID.json` junto al brief, con
 candidatos musicales y evidencia fechada por país/período. En noticias consulta
@@ -168,6 +171,14 @@ La habilidad editorial añade la etiqueta `Noticias` (`noticias`) a `kind=news`,
 conservando las otras etiquetas y categorías. También se clasifica el archivo
 previo de noticias, sin cambiar URLs ni fechas.
 
-Renderer v5: fondos, paneles, texto e intro/outro neutros. El acento se limita a
+Renderer v6: fondos, paneles, texto e intro/outro neutros. El acento se limita a
 la cifra o comparación central; la etiqueta de tema y el progreso son grises.
 Se conserva el logo y el mastering. Los maestros ya aprobados no se reeditan.
+
+Noticias usa una entrada rápida de logo/texto, cabecera y barrido horizontal,
+con un identificador de dos notas sintetizado localmente. Se mezcla debajo de
+la voz, con RMS máximo de un cuarto del de la narración durante ese intervalo,
+antes de la normalización final a -16 LUFS. Experiencias conserva la entrada
+tranquila, sin identificador sonoro. Ambas duran un segundo sobre voz existente.
+Las revisiones se renderizan en otra carpeta; una actualización del renderer
+no sobrescribe trabajos ya publicados, programados o en proceso de distribución.

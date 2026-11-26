@@ -82,8 +82,9 @@ def card(scene,index,total,brief,path):
 
 def render(brief,output,tts_config,branding=None):
     from gemini_tts import GeminiSpeech
-    from video_finish import branding_spec,brand_card,outro_timeline,master,verify_mastering,verify_frames
+    from video_finish import branding_spec,brand_card,intro_timeline,outro_timeline,news_ident,master,verify_mastering,verify_frames
     branding=branding_spec(branding)
+    branding.setdefault('mode','news' if brief.get('series_title')=='Noticias de tecnología' else 'experience')
     validate(brief);output.mkdir(parents=True,exist_ok=True)
     voice=GeminiSpeech(tts_config);chunks=[];cursor=0;sample_rate=None;audio_parts=[];scenes=[]
     if branding['enabled']:
@@ -101,13 +102,13 @@ def render(brief,output,tts_config,branding=None):
             pause=.12;audio_parts.append(samples+b'\0\0'*round(pause*sample_rate))
             chunks.append({'start':cursor,'end':cursor+duration,'text':text});cursor+=duration+pause
         scenes.append({'file':image.name,'duration':cursor-start,'kind':'hook' if scene_index==0 else 'body'})
-        if scene_index==0 and branding['enabled']:
-            audio_parts.append(b'\0\0'*round(branding['intro_seconds']*sample_rate));scenes.append({'file':'intro.png','duration':branding['intro_seconds'],'kind':'intro'});cursor+=branding['intro_seconds']
     if not 20<=cursor<=150:raise ValueError('Video must be between 20 and 150 seconds')
     with wave.open(str(output/'narration.wav'),'wb') as out:
         out.setnchannels(1);out.setsampwidth(2);out.setframerate(sample_rate);out.writeframes(b''.join(audio_parts))
+    scenes=intro_timeline(scenes,branding)
+    production,ident=news_ident(output/'narration.wav',output/'narration-production.wav',scenes[0]['duration'],branding['enabled'] and branding['mode']=='news')
     scenes=outro_timeline(scenes,branding)
-    audio_report=master(output/'narration.wav',output/'narration-mastered.wav')
+    audio_report=master(production,output/'narration-mastered.wav');audio_report['news_ident']=ident
     srt='\n\n'.join(f"{i+1}\n{timestamp(c['start'])} --> {timestamp(c['end'])}\n{c['text']}" for i,c in enumerate(chunks))+'\n'
     (output/'subtitles.srt').write_text(srt)
     header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Arial,48,&H00FFFFFF,&H00FFFFFF,&HCC111111,&HCC111111,0,0,0,0,100,100,0,0,3,13,0,2,100,180,460,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
@@ -124,6 +125,7 @@ def render(brief,output,tts_config,branding=None):
     (output/'caption.txt').write_text(brief['caption']+'\n')
     digest=hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()
     manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'palette':{'name':'datogedon-grayscale-v1','surfaces':'grayscale','accent':'#ff966f','accent_usage':'key_metric_or_comparison_only'},'motion':motion,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
+    manifest['branding'].update(narration_continues=True,news_ident=ident)
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
@@ -132,6 +134,9 @@ def enqueue(root,post,config):
     if post['status']!='publish':raise ValueError('Video drafts require a published article')
     state=Path(config['state_dir']).expanduser();state.mkdir(parents=True,exist_ok=True)
     queue_path=state/'queue.json';queue=read(queue_path,{'jobs':{}});key=str(post['id'])
+    previous=queue['jobs'].get(key,{})
+    if previous.get('published') or any(p.get('status') in ['published','scheduled','publishing','shared_pending_permalink','under_review'] for p in previous.get('platforms',{}).values()):
+        return previous
     brief_path=root/'private'/f"video-brief-{post['id']}.json"
     output=Path(config['output_dir']).expanduser()/f"{post['id']}-{re.sub('[^a-zA-Z0-9_-]','-',post.get('slug','article'))}"
     if not brief_path.exists():
@@ -146,10 +151,11 @@ def enqueue(root,post,config):
         branding=branding_spec(config.get('branding'))
         if branding['enabled']:
             mode=read(root/'private/cycle-context.json',{}).get('mode','news')
+            branding['mode']=mode
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};write(queue_path,queue);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':5},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'renderer_version':6},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}

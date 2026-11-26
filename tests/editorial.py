@@ -334,6 +334,50 @@ class GeminiAudio(unittest.TestCase):
 
 
 class VideoFinishing(unittest.TestCase):
+    def test_logo_consumes_body_visual_time_without_delaying_narration(self):
+        from video_finish import intro_timeline,outro_timeline
+        original=[{'file':'hook.png','duration':4.2,'kind':'hook'},
+                  {'file':'body.png','duration':.4,'kind':'body'},
+                  {'file':'next.png','duration':8,'kind':'body'}]
+        for mode in ['news','experience']:
+            config={'enabled':True,'mode':mode,'intro_seconds':1,'outro_seconds':3}
+            result=outro_timeline(intro_timeline(original,config),config)
+            self.assertEqual(sum(s['frame_count'] for s in result),378)
+            intro=next(s for s in result if s['kind']=='intro')
+            self.assertEqual((intro['start_frame'],intro['frame_count']),(126,30))
+            self.assertEqual(intro['brand_style'],mode)
+            self.assertEqual(original[1]['duration'],.4)
+            self.assertAlmostEqual(sum(s['duration'] for s in result),12.6)
+    def test_news_sound_is_below_voice_and_does_not_change_timing_or_other_samples(self):
+        import wave,math
+        from array import array
+        from video_finish import news_ident
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);source=root/'voice.wav';target=root/'mix.wav';rate=24000
+            samples=array('h',(round(8000*math.sin(2*math.pi*220*i/rate)) for i in range(rate*3)))
+            with wave.open(str(source),'wb') as out:
+                out.setnchannels(1);out.setsampwidth(2);out.setframerate(rate);out.writeframes(samples.tobytes())
+            _,report=news_ident(source,target,1,True)
+            with wave.open(str(target),'rb') as stream:
+                self.assertEqual(stream.getnframes(),len(samples));mixed=array('h');mixed.frombytes(stream.readframes(stream.getnframes()))
+            self.assertEqual(mixed[:rate],samples[:rate]);self.assertEqual(mixed[round(1.48*rate):],samples[round(1.48*rate):])
+            difference=[a-b for a,b in zip(mixed[rate:round(1.48*rate)],samples[rate:round(1.48*rate)])]
+            rms=lambda values:math.sqrt(sum(x*x for x in values)/len(values))
+            self.assertGreater(rms(difference),0);self.assertLessEqual(rms(difference)/rms(samples[rate:round(1.48*rate)]),.251)
+            self.assertFalse(report['adds_duration'])
+            source_result,disabled=news_ident(source,root/'experience.wav',1,False)
+            self.assertEqual(source_result,source);self.assertFalse(disabled['enabled']);self.assertFalse((root/'experience.wav').exists())
+    def test_renderer_updates_preserve_distributed_video_and_queue(self):
+        from video import enqueue
+        for platform in ['tiktok','youtube','instagram']:
+            with self.subTest(platform=platform),tempfile.TemporaryDirectory() as directory:
+                root=Path(directory);path=root/'state/queue.json'
+                previous={'post_id':1,'status':'ready_for_review','video_sha256':'published-master',
+                          'platforms':{platform:{'status':'published','url':'https://example.invalid/confirmed'}}}
+                write(path,{'jobs':{'1':previous}});before=path.read_bytes()
+                with patch('video.subprocess.Popen') as renderer:
+                    self.assertEqual(enqueue(root,{'id':1,'status':'publish'},{'state_dir':str(path.parent)}),previous)
+                    renderer.assert_not_called();self.assertEqual(path.read_bytes(),before)
     def phases(self):return [{'file':'hook.png','duration':4.2,'kind':'hook'},{'file':'intro.png','duration':1,'kind':'intro'},{'file':'body.png','duration':12,'kind':'body'},{'file':'final.png','duration':5.3,'kind':'body'}]
     def test_intro_is_30_frames_outro_overlaps_final_audio(self):
         from video_finish import outro_timeline

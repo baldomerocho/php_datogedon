@@ -20,8 +20,10 @@ def layers(image,visual,brand=False):
             mask=Image.new('L',crop.size);ImageDraw.Draw(mask).rounded_rectangle((0,0,crop.width-1,crop.height-1),radius=rounded,fill=255);crop.putalpha(mask)
         base.paste(background.crop(box),box[:2]);items.append((crop,box[:2],delay,duration,shift,pulse))
     if brand:
-        take((150,330,811,991),duration=.24,shift=24,rounded=34)
-        take((70,1020,890,1320),delay=.10,duration=.28,shift=22)
+        news=brand=='news'
+        if news:take((90,165,881,223),duration=.12,shift=0)
+        take((150,330,811,991),duration=.16 if news else .24,shift=16 if news else 24,rounded=34)
+        take((70,1020,890,1320),delay=.06 if news else .10,duration=.18 if news else .28,shift=16 if news else 22)
         return base,items
     take((80,250,890,560),duration=.32,shift=30)
     take((90,620,881,1071),delay=.08,duration=.38,shift=36,rounded=30)
@@ -73,11 +75,18 @@ def encode(output,scenes,visuals):
     try:
         for scene in scenes:
             with Image.open(output/scene['file']) as source:image=source.convert('RGB')
-            base,items=layers(image,visuals.get(scene['file']),scene['kind'] in ('intro','outro'))
+            news=scene.get('brand_style')=='news'
+            base,items=layers(image,visuals.get(scene['file']),'news' if news else scene['kind'] in ('intro','outro'))
             settled=image.tobytes()
             for index in range(scene['frame_count']):
                 time=index/30
-                pixels=frame(base,items,time).tobytes() if time<PROFILE['settled_after_seconds'] else settled
+                if news and time<.55:
+                    from PIL import ImageDraw
+                    animated=frame(base,items,time)
+                    x=90+round(790*progress(time,0,.48))
+                    ImageDraw.Draw(animated).line((90,1350,x,1350),fill='#fafafa',width=4)
+                    pixels=animated.tobytes()
+                else:pixels=frame(base,items,time).tobytes() if time<PROFILE['settled_after_seconds'] else settled
                 process.stdin.write(pixels)
         process.stdin.close();process.stdin=None
         _,error=process.communicate(timeout=120)

@@ -27,9 +27,14 @@ Pero hay un detalle». Mantén visible el alcance de la prueba y explica ensegui
 el matiz; no sugieras que todo proyecto obtiene ese resultado. Evita abrir con
 jerga como nightly o frontend sin contexto; introdúcela después en lenguaje claro.
 El «chisme» es el hecho que despierta curiosidad, nunca un rumor o exageración.
-Después del gancho el padre inserta una intro visual de un segundo con el logo. El resto desarrolla el
+Después del gancho el padre superpone una intro visual de un segundo con el logo mientras empieza
+la siguiente frase: no escribas una pausa, saludo o frase de presentación para el logo. Noticias
+usan una entrada visual rápida y un identificador sonoro original de menos de medio segundo,
+por debajo de la voz. Experiencias con IA conservan una entrada tranquila y sin ese sonido.
+El resto desarrolla el
 contenido. El padre muestra el logo y «Comparte» sobre los últimos segundos de la
-voz. El MP4 maestro conserva solo voz; la música complementaria se selecciona después
+voz. El MP4 maestro conserva la voz y, solo en noticias, el identificador sonoro; no lleva música
+de fondo. La música complementaria se selecciona después
 en TikTok según el plan de distribución. No agregues efectos ni despedida hablada extra.
 Incluye series_title="Noticias de tecnología" para noticias o "Experiencias con IA"
 para relatos personales; el título del tema va en los gráficos de contenido.

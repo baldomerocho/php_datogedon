@@ -1,5 +1,6 @@
-"""Reusable logo bumpers and measured, voice-only mobile mastering."""
-import hashlib,json,math,re,subprocess
+"""Logo overlays, original news ident and measured mobile mastering."""
+import hashlib,json,math,re,subprocess,wave
+from array import array
 from pathlib import Path
 PREPROCESS='highpass=f=70,acompressor=threshold=0.125:ratio=1.8:attack=15:release=130:makeup=1:knee=2.828'
 TARGET={'integrated_lufs':-16.0,'true_peak_dbtp':-1.5,'loudness_range_lu':7.0}
@@ -30,7 +31,53 @@ def brand_card(config,brief,path,outro=False):
     if len(lines)>2 or any(draw.textlength(line,font=font)>790 for line in lines):raise ValueError('Brand title overflows safe area')
     for n,line in enumerate(lines):draw.text((480-draw.textlength(line,font=font)/2,1090+n*94),line,font=font,fill='#fafafa')
     draw.line((300,1028,660,1028),fill='#bdbdbd',width=5)
+    if not outro and config.get('mode')=='news':
+        draw.rectangle((90,165,880,222),fill='#fafafa')
+        draw.text((112,174),'DATOGEDON / NOTICIAS',font=ImageFont.truetype(font_path,30),fill='#111111')
+        for x in (90,860):draw.rectangle((x,330,x+20,990),fill='#707070')
+        draw.line((90,1350,880,1350),fill='#505050',width=2)
     image.save(path)
+
+def intro_timeline(scenes,config):
+    """Replace the first second of body visuals; never add time to the voice."""
+    timeline=[dict(scene) for scene in scenes]
+    if not config.get('enabled'):return timeline
+    duration=config['intro_seconds']
+    if len(timeline)<2 or sum(s['duration'] for s in timeline[1:])<duration:
+        raise ValueError('Narrated body is too short for the logo overlay')
+    result=[timeline[0],{'file':'intro.png','duration':duration,'kind':'intro',
+                         'brand_style':'news' if config.get('mode')=='news' else 'experience'}]
+    for scene in timeline[1:]:
+        take=min(duration,scene['duration']);duration-=take
+        if scene['duration']>take:result.append({**scene,'duration':scene['duration']-take})
+    return result
+
+def news_ident(source,target,start,enabled):
+    """Mix an original 480 ms ident below speech without changing any timing."""
+    if not enabled:return source,{'enabled':False}
+    with wave.open(str(source),'rb') as stream:
+        params=stream.getparams();rate=stream.getframerate()
+        if stream.getnchannels()!=1 or stream.getsampwidth()!=2:raise ValueError('Expected mono PCM16')
+        voice=array('h');voice.frombytes(stream.readframes(stream.getnframes()))
+    count=round(.48*rate);offset=round(start*rate)
+    if offset<0 or offset+count>len(voice):raise ValueError('News ident must fit under existing narration')
+    effect=[]
+    for i in range(count):
+        t=i/rate;value=0
+        for delay,freq in [(0,880),(.12,1320)]:
+            age=t-delay
+            if age>=0:value+=math.sin(2*math.pi*freq*age)*min(1,age/.008)*math.exp(-age/.075)
+        effect.append(value*min(1,(count-i)/(.035*rate)))
+    rms=lambda values:math.sqrt(sum(v*v for v in values)/len(values))
+    speech_rms=rms(voice[offset:offset+count])/32768
+    gain=min(.07/max(abs(v) for v in effect),speech_rms*.25/rms(effect))
+    if any(abs(voice[offset+i]+round(value*gain*32768))>=32767 for i,value in enumerate(effect)):
+        raise ValueError('Not enough headroom for the news ident')
+    for i,value in enumerate(effect):voice[offset+i]+=round(value*gain*32768)
+    with wave.open(str(target),'wb') as stream:stream.setparams(params);stream.writeframes(voice.tobytes())
+    return target,{'enabled':True,'name':'datogedon-news-ident-v1','original_procedural_audio':True,
+                   'start_seconds':start,'duration_seconds':.48,'speech_rms_ratio_max':.25,
+                   'peak_dbfs_max':round(20*math.log10(.07),2),'adds_duration':False}
 
 def outro_timeline(scenes,config):
     timeline=[dict(scene) for scene in scenes]
