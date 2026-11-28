@@ -107,7 +107,10 @@ Lee public-video-catalog.json si existe. Solo cuando una guía publicada amplíe
 directamente este mismo problema, añade extended_post_id con su post_id y explica
 esa relación en el caption. No inventes URLs ni promociones una guía pendiente.
 El padre verifica el catálogo y añade la llamada visual del outro. No sacrifiques
-la explicación del corto para usarlo como un anuncio del video largo.
+la explicación del corto para usarlo como un anuncio del video largo. Después de
+entregar el valor, puedes cerrar con una invitación específica al ejemplo, pasos
+o comandos del artículo. Evita «mira más» hablado sin explicar qué amplía. El outro
+v3 muestra «Más en datogedon.com» cuando no hay guía larga relacionada pública.
 
 Visuales disponibles, sin valores por defecto tomados de otra noticia:
 - evidence: visual_data={asset,sha256,source_url,credit,kind,caption}.

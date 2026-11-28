@@ -37,7 +37,7 @@ def brand_card(config,brief,path,outro=False):
             small=ImageFont.truetype(font_path,size)
             draw.text((480-draw.textlength(label,font=small)/2,y),label,font=small,fill='#d8d8d8')
     elif outro:
-        label='Sigue a @datogedon';small=ImageFont.truetype(font_path,42)
+        label='Más en datogedon.com' if brief.get('script_version',1)>=3 else 'Sigue a @datogedon';small=ImageFont.truetype(font_path,42)
         draw.text((480-draw.textlength(label,font=small)/2,1220),label,font=small,fill='#d8d8d8')
     draw.line((300,1028,660,1028),fill='#bdbdbd',width=5)
     if not outro and config.get('mode')=='news':
