@@ -46,6 +46,15 @@ def timestamp(seconds,ass=False):
     whole,fraction=divmod(units,scale);hours,remainder=divmod(whole,3600);minutes,secs=divmod(remainder,60)
     return f'{hours}:{minutes:02}:{secs:02}.{fraction:02}' if ass else f'{hours:02}:{minutes:02}:{secs:02},{fraction:03}'
 
+def fit_headline(text,measure):
+    for size in range(78,53,-2):
+        lines=[]
+        for word in text.split():
+            if lines and measure(lines[-1]+' '+word,size)<=790:lines[-1]+=' '+word
+            else:lines.append(word)
+        if len(lines)<=3 and all(measure(line,size)<=790 for line in lines):return size,lines
+    raise ValueError('Headline cannot fit the video safe area')
+
 def card(scene,index,total,brief,path):
     from PIL import Image,ImageDraw,ImageFont
     im=Image.new('RGB',(1080,1920),'#111111');d=ImageDraw.Draw(im)
@@ -60,14 +69,9 @@ def card(scene,index,total,brief,path):
         d.text(((960-w)/2,y),text,font=f,fill=color)
     d.text((90,145),brief['topic_label'],font=font(26,True),fill=muted)
     d.text((90,190),brief['date_label'],font=font(24),fill=muted)
-    lines=[]
-    for word in scene['headline'].split():
-        if lines and d.textlength(lines[-1]+' '+word,font=font(78,True))<790:lines[-1]+=' '+word
-        else:lines.append(word)
-    if len(lines)>3:raise ValueError('Headline overflows video safe area')
+    size,lines=fit_headline(scene['headline'],lambda text,size:d.textlength(text,font=font(size,True)))
     for n,line in enumerate(lines):
-        if d.textlength(line,font=font(78,True))>790:raise ValueError('Headline word too wide')
-        d.text((86,260+n*94),line,font=font(78,True),fill=white)
+        d.text((86,260+n*94),line,font=font(size,True),fill=white)
     d.rounded_rectangle((90,620,880,1070),radius=30,fill=panel,outline=stroke,width=2)
     visual=scene['visual'];data=scene['visual_data']
     if visual=='parallel':
@@ -124,11 +128,13 @@ def render(brief,output,tts_config,branding=None):
         from video_evidence import cache_cover,EVIDENCE_ROOT
         brief['article_cover']=cache_cover(brief['article_cover_source'],EVIDENCE_ROOT.parent,brief['post_id'])
     if brief.get('script_version',1)>=3 and not brief.get('article_cover'):raise ValueError('Published article cover required for the vertical cover')
+    # Check every graphic before requesting any paid/free-quota speech chunks.
+    for i,scene in enumerate(brief['scenes']):card(scene,i,len(brief['scenes']),brief,output/f'scene-{i:02}.png')
     voice=GeminiSpeech(tts_config);chunks=[];cursor=0;sample_rate=None;audio_parts=[];scenes=[]
     if branding['enabled']:
         brand_card(branding,brief,output/'intro.png');brand_card(branding,brief,output/'outro.png',True)
     for scene_index,scene in enumerate(brief['scenes']):
-        image=output/f'scene-{scene_index:02}.png';card(scene,scene_index,len(brief['scenes']),brief,image)
+        image=output/f'scene-{scene_index:02}.png'
         start=cursor
         for chunk_index,text in enumerate(scene['chunks']):
             wav=output/f'voice-{scene_index:02}-{chunk_index:02}.wav'
@@ -221,7 +227,7 @@ def enqueue(root,post,config):
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'article_cover_source':brief.get('article_cover_source'),'renderer_version':9},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'article_cover_source':brief.get('article_cover_source'),'renderer_version':10},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}

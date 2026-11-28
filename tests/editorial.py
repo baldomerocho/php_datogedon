@@ -232,6 +232,13 @@ class EarlyMetrics(unittest.TestCase):
 
 
 class VideoDrafts(unittest.TestCase):
+    def test_long_headline_shrinks_without_exceeding_three_lines(self):
+        from video import fit_headline
+        measure=lambda text,size:len(text)*size*.62
+        size,lines=fit_headline('GitHub Desktop corrige la comparación de ramas',measure)
+        self.assertLess(size,78);self.assertLessEqual(len(lines),3)
+        self.assertTrue(all(measure(line,size)<=790 for line in lines))
+        with self.assertRaises(ValueError):fit_headline('X'*100,measure)
     def brief(self):
         return {'post_id':1,'account':'@datogedon','article_url':'https://datogedon.com/synthetic/','sources':['https://example.invalid/source'],'topic_label':'Synthetic technology','date_label':'Synthetic date','source_label':'Synthetic source','scenes':[{'headline':'A concise synthetic headline','visual':'context','visual_data':{'title':'Context','labels':['One','Two']},'chunks':['A synthetic description explaining a verified change and its scope without adding unsupported claims.']} for _ in range(3)]}
     def test_real_video_brief_validates_without_external_runtime(self):
