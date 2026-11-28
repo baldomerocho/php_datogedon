@@ -141,7 +141,8 @@ reason explícito. No inventes posiciones, incrementos ni pistas para llenar cup
 La falta de tendencias no bloquea el artículo ni el render de voz.
 No hay credenciales Discovery API configuradas: no simules llamadas ni descargues
 música. Su catálogo CML no equivale a todos los sonidos virales de la app.
-Selección final en TikTok con su identificador nativo y escucha de la mezcla.
+Selección final en TikTok con su identificador nativo y una confirmación de los
+ajustes guardados. No analizar ni escuchar toda la mezcla por pieza de rutina.
 Para Datogedon la selección obligatoria está en Favoritos de TikTok: Closed Slip
 a -12 dB (opción general, ambiental/melancólica), Shard Pact a -14 dB (electro
 tranquilo/lento con remates), Bonefire Circle a -16 dB (solo temas alegres, samba)

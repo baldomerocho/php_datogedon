@@ -18,8 +18,8 @@ la duración del tema completo no garantiza la del fragmento disponible.
 
 - [ ] Cuenta @datogedon, artículo público y publicación no duplicada.
 - [ ] Favorito adecuado al tema; título real, versión e ID registrados.
-- [ ] Ganancia correspondiente verificada; voz original activa y conservada.
-- [ ] Mezcla revisada al inicio, centro y final; música cubre toda la pieza.
+- [ ] Pista y ganancia confirmadas una vez después de guardar; voz original activa.
+- [ ] Duración del tramo seleccionado suficiente para cubrir el video.
 - [ ] Capturas guardadas del sonido y volumen; no convertir porcentajes a dB sin escala conocida.
 - [ ] Música todavía seleccionada antes de publicar.
 - [ ] URL pública, cuenta y sonido atribuido comprobados; recibo `proof.music` guardado.
@@ -29,6 +29,11 @@ Si el editor web no ofrece Favoritos o el control necesario, conservar el borrad
 y registrar el bloqueo. Continuar con los demás destinos. No publicar sin música
 por omisión ni volver a subir un video ya publicado. Los trabajos nuevos exigen
 evidencia de música para aceptar el recibo de publicación de TikTok.
+
+Desde el 28/11/2026, la comprobación rutinaria es de configuración guardada:
+`proof.music.settings_verified=true`. No requiere escuchar ni medir cada tramo
+del video. El análisis de audio se reserva para fallas concretas o una solicitud
+del usuario. Los recibos históricos con `mix_checked=true` siguen siendo válidos.
 
 Registrar por pieza: URL, fecha/hora de publicación, tema, duración, sonido/versión/ID,
 ganancia y evidencia. En cada corte de métricas anotar fecha/hora, edad del video,

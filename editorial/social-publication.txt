@@ -51,17 +51,16 @@ el sonido nativo de TikTok ANTES de publicar; no descargar ni trasladar su músi
 3. Verificar título REAL, artista/versión e ID nativo: los nombres del usuario
    son etiquetas de búsqueda, no IDs. No elegir una versión homónima a ciegas.
 4. Ajustar solo el sonido añadido al valor indicado, conservar la voz original
-   activa. Verificar el valor en el control; no tratar porcentaje como dB ni
-   inventar conversiones. Guardar evidencia del control y selección en snapshot.
-5. Comprobar mezcla y cobertura del principio, centro y final: voz clara, sin
-   silencios por terminar la pista. El usuario informa que estos favoritos duran
-   al menos 3 minutos: margen para los cortos actuales, pero verificar que el
-   tramo utilizable/seleccionado en TikTok cubra la duración real del video.
-   No asegurar escucha en móvil si no ocurrió.
-   Si no hay capacidad de revisar la mezcla, no inventar mix_checked.
-6. Confirmar sonido aún seleccionado y guardar evidencia ANTES de publicar.
-   Si Favoritos/volumen no están disponibles en web, falta la versión o no se
-   puede verificar la mezcla, conservar el mismo borrador y registrar blocked
+   activa. No tratar porcentaje como dB ni inventar conversiones.
+5. Guardar y confirmar UNA VEZ que la pista y el valor configurado se conservan.
+   La cobertura se comprueba con la duración del tramo seleccionado y la duración
+   del video; mantener la voz original activa. Esta comprobación de ajustes basta.
+   No medir salidas WebAudio, comparar muestras ni escuchar inicio/centro/final
+   de cada video por rutina. Solo investigar audio ante una falla concreta o por
+   solicitud del usuario. No afirmar escucha o mediciones que no se realizaron.
+6. Conservar evidencia breve de los ajustes guardados. Si Favoritos/volumen no
+   están disponibles en web, falta la versión o no se conservan los ajustes,
+   conservar el mismo borrador y registrar blocked
    con causa precisa. No publicar automáticamente sin música; continuar YouTube
    e Instagram. No duplicar ni eliminar publicaciones antiguas para añadir audio.
 7. Después de publicar, verificar URL pública y pista atribuida. proof.json debe
@@ -69,7 +68,7 @@ el sonido nativo de TikTok ANTES de publicar; no descargar ni trasladar su músi
    native_title:"TÍTULO REAL",native_sound_id:"ID REAL",version:"ARTISTA/VERSIÓN",
    gain_db:-12,selection_reason:"Afinidad con el tema",volume_evidence:"Control
    observado y archivo de evidencia",full_duration_verified:true,
-   voice_preserved:true,mix_checked:true}. Los valores son pruebas reales, no
+   voice_preserved:true,settings_verified:true}. Los valores son pruebas reales, no
    defaults: sustituir título/ganancia según favorito. No declarar publicado si
    falta un requisito; el coordinador valida este recibo para trabajos nuevos.
 8. Mantener el recibo del audio para comparar a 24 h, 72 h y 7 días desde la

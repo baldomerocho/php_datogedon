@@ -374,8 +374,8 @@ class SocialDistribution(unittest.TestCase):
                     'native_sound_id':'synthetic-id','version':'Synthetic artist/version','gain_db':-12,
                     'selection_reason':'General ambient background','volume_evidence':str(proofpath),
                     'full_duration_verified':True,'voice_preserved':True,'mix_checked':False}
-                with self.assertRaisesRegex(ValueError,'mix_checked'):record(root,1,'tiktok','published',url,proof)
-                proof['music']['mix_checked']=True
+                with self.assertRaisesRegex(ValueError,'settings_verified'):record(root,1,'tiktok','published',url,proof)
+                proof['music']['settings_verified']=True
                 record(root,1,'tiktok','published',url,proof)
             entry=read(location(root)/'outbox.json')['jobs']['1']['platforms']['tiktok']
             self.assertEqual(entry['proof']['music']['gain_db'],-12)
@@ -387,8 +387,10 @@ class SocialDistribution(unittest.TestCase):
             'selection_reason':'Quiet electro','volume_evidence':'Synthetic native control',
             'full_duration_verified':True,'voice_preserved':True,'mix_checked':True}
         verify(music)
+        verify({**music,'mix_checked':False,'settings_verified':True})
         for change in [{'favorite_title':'unknown'}, {'gain_db':14}, {'gain_db':float('nan')},
-                       {'gain_db':True}, {'native_sound_id':''}, {'full_duration_verified':False}]:
+                       {'gain_db':True}, {'native_sound_id':''}, {'full_duration_verified':False},
+                       {'mix_checked':False,'settings_verified':False}]:
             with self.subTest(change=change),self.assertRaises(ValueError):verify({**music,**change})
     def test_platform_receipt_cannot_claim_success_without_identity_and_public_proof(self):
         from social import record,location

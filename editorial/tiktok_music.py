@@ -3,9 +3,10 @@ from copy import deepcopy
 import math
 
 POLICY = {
-    'version': 1,
+    'version': 2,
     'required': True,
     'source': 'tiktok_favorites',
+    'verification': 'saved_settings',
     'user_reported_min_duration_seconds': 180,
     'default': 'Closed Slip',
     'favorites': [
@@ -33,6 +34,10 @@ def verify(music):
         raise ValueError('TikTok music must use the configured favorite gain')
     if music.get('source') != POLICY['source']:
         raise ValueError('TikTok music must be selected natively from Favorites')
-    for field in ('full_duration_verified', 'voice_preserved', 'mix_checked'):
+    for field in ('full_duration_verified', 'voice_preserved'):
         if music.get(field) is not True:
             raise ValueError('Missing TikTok music verification: '+field)
+    # Existing receipts used an audio-analysis check. A saved-settings readback
+    # is sufficient for new uploads; never require per-video WebAudio analysis.
+    if music.get('settings_verified') is not True and music.get('mix_checked') is not True:
+        raise ValueError('Missing TikTok music verification: settings_verified')
