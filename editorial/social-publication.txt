@@ -35,6 +35,9 @@ fuentes/artículo y voz sintética. Español Latinoamérica, no creado para niñ
 estas noticias dirigidas a desarrolladores; revisar cada caso. Declarar uso de IA
 con la opción ofrecida y comprobar que quedó guardada. No cambiar los defaults del
 canal. Añadir subtitles.srt con tiempos si corresponde y comprobar su guardado.
+Usar cover.jpg vertical si Studio ofrece el control para ese Short. Si la
+miniatura solo puede elegirse desde la app, registrar esa limitación sin afirmar
+que quedó aplicada; no detener la publicación por esa limitación de interfaz.
 Esperar procesamiento y comprobaciones; elegir Público para noticia ya publicada,
 o programación elegible para experiencia. Verificar confirmación de publicación,
 URL /shorts/ID, canal, título y reproducción. Una URL asignada no prueba visibilidad.
@@ -114,3 +117,18 @@ y type_text; comprueba contador y vista previa. En Instagram activa la etiqueta
 IA con input[role=switch].click() si hace falta y confirma checked. Una respuesta
 de upload_file puede informar error después de completar: inspecciona el estado
 antes de repetir. Los UID cambian después de cada modal; vuelve a tomar snapshot.
+
+
+MEDICIONES TEMPRANAS SIN RETRASAR LA PUBLICACIÓN:
+job.json puede incluir measurement_targets con URLs de otros videos ya públicos.
+Solo si esas publicaciones y sus cifras YA están visibles en la página que usas,
+puedes registrarlas en observations.json (array, máximo30). No abras paneles extra,
+no esperes horas, no controles pestañas ajenas ni bloquees la subida para medir.
+Cada objeto: post_id,platform,url,captured_at ISO con zona,snapshot_path y views,
+likes,comments,shares,saves,average_watch_seconds,completion_percent,for_you_percent.
+Los campos no disponibles son null. Solo números de la interfaz propia; no estimar
+retención, no usar los likes como compartidos ni reconstruir vistas de horas previas.
+La captura debe guardarse en ~/Movies/Datogedon/review y corresponder al dato.
+Se conserva la edad REAL desde confirmación pública; 1/3/6/24h son cortes deseados,
+no una afirmación de que se midió cada hora. No habrá sondeo o análisis adicional
+por esta tarea. El coordinador guarda las observaciones válidas sin duplicarlas.

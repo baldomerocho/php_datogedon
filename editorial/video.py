@@ -10,24 +10,34 @@ def validate(brief):
     if brief.get('script_version',1)>=2:
         hook=brief['scenes'][0]
         if len(hook.get('chunks',[]))!=1 or len(re.findall(r'\w+',hook['chunks'][0]))>22:raise ValueError('The opening must be one useful sentence of at most 22 words')
-        if hook.get('visual') not in ['comparison','flow','metric']:raise ValueError('The opening must show the change, mechanism or sourced result')
+        if hook.get('visual') not in ['comparison','flow','metric','evidence']:raise ValueError('The opening must show the change, mechanism or sourced result')
+    if brief.get('script_version',1)>=3:
+        angle=brief.get('editorial',{})
+        if any(not isinstance(angle.get(k),str) or not angle[k].strip() for k in ['angle','promise','payoff','source_url']):raise ValueError('Document the hook promise, payoff and source')
+        if angle['source_url'] not in brief['sources']:raise ValueError('Hook source must be cited')
+        if not any(s.get('visual')=='evidence' for s in brief['scenes']):raise ValueError('A concrete sourced visual or clearly labeled example is required')
     for key in ['topic_label','date_label','source_label']:
         if not isinstance(brief.get(key),str) or not 1<=len(brief[key])<=70:raise ValueError('Editorial labels required')
     for scene in brief['scenes']:
-        if scene.get('visual') not in ['parallel','comparison','metric','context','question','flow']:raise ValueError('Unsupported visual')
+        if scene.get('visual') not in ['parallel','comparison','metric','context','question','flow','evidence']:raise ValueError('Unsupported visual')
         if not scene.get('headline') or len(scene['headline'])>100:raise ValueError('Short headline required')
         if not scene.get('chunks'):raise ValueError('Narration missing')
         data=scene.get('visual_data',{})
-        required={'parallel':['label','note'],'comparison':['rows'],'metric':['value','detail','scope','note'],'context':['title','labels'],'question':['line1','line2','comparison','note'],'flow':['from','to','condition','check']}[scene['visual']]
+        required={'parallel':['label','note'],'comparison':['rows'],'metric':['value','detail','scope','note'],'context':['title','labels'],'question':['line1','line2','comparison','note'],'flow':['from','to','condition','check'],'evidence':['asset','sha256','source_url','credit','kind','caption']}[scene['visual']]
         if any(key not in data for key in required):raise ValueError('Visual data missing; never reuse unrelated numbers')
         if scene['visual']=='comparison' and len(data['rows'])!=2:raise ValueError('Comparison requires two rows')
         if scene['visual']=='context' and not 1<=len(data['labels'])<=3:raise ValueError('Use at most three contextual labels')
+        if scene['visual']=='evidence':
+            from video_evidence import asset
+            asset(data,brief)
+            if data['kind'] not in ['screenshot','source_image','example'] or not isinstance(data['caption'],str) or not 1<=len(data['caption'])<=60:raise ValueError('Describe the sourced image or labeled example')
         if scene['visual']=='flow' and (any(not isinstance(data[k],list) or not 1<=len(data[k])<=2 or any(not isinstance(s,str) or len(s)>26 for s in data[k]) for k in ['from','to']) or len(data['condition'])>40 or len(data['check'])>44):raise ValueError('Flow labels overflow safe areas')
         for chunk in scene['chunks']:
             if not isinstance(chunk,str) or not chunk.strip() or len(chunk)>155:raise ValueError('Short caption chunks required')
     words=sum(len(re.findall(r'\w+',c)) for scene in brief['scenes'] for c in scene['chunks'])
     if not 40<=words<=300:raise ValueError('Use a focused 40–300 word script')
-    public_text=' '.join(c for scene in brief['scenes'] for c in scene['chunks'])
+    if brief.get('script_version',1)>=3 and words>130:raise ValueError('Shorts should explain one idea, not compress the full article')
+    public_text=' '.join([*(c for scene in brief['scenes'] for c in scene['chunks']),*(scene['headline'] for scene in brief['scenes']),*(scene['visual_data'].get(k,'') for scene in brief['scenes'] for k in ['credit','caption']),brief.get('cover_title','')])
     if re.search(r'/Users/|/home/|(?:ghp_|sk-proj-|github_pat_)[A-Za-z0-9_-]{20,}',public_text):raise ValueError('Possible private data in video')
     return brief
 
@@ -77,6 +87,14 @@ def card(scene,index,total,brief,path):
         centered(data['title'],673,48,white,True)
         for n,label in enumerate(data['labels']):
             y=765+n*87;d.rounded_rectangle((135,y,835,y+65),radius=12,fill='#303030');centered(label,y+13,31)
+    elif visual=='evidence':
+        from PIL import ImageOps
+        from video_evidence import asset
+        with Image.open(asset(data,brief)) as source:
+            tile=ImageOps.contain(source.convert('RGB'),(750,315))
+            im.paste(tile,(110+(750-tile.width)//2,655+(315-tile.height)//2))
+        centered(('Ejemplo: ' if data['kind']=='example' else '')+data['caption'],982,25)
+        centered(data['credit'],1030,22,muted)
     elif visual=='flow':
         centered(data['condition'],675,31,white,True)
         for x,key in [(130,'from'),(525,'to')]:
@@ -89,7 +107,7 @@ def card(scene,index,total,brief,path):
         centered(data['check'],1000,27,muted)
     else:
         centered(data['line1'],690,43,white,True);centered(data['line2'],770,43,white,True);centered(data['comparison'],893,52,orange,True);centered(data['note'],994,27,muted)
-    d.text((90,1120),brief['source_label'],font=font(24),fill=muted)
+    if visual!='evidence':d.text((90,1120),brief['source_label'],font=font(24),fill=muted)
     d.line((90,1175,880,1175),fill=stroke,width=3)
     width=790/total
     for n in range(total):d.rectangle((90+n*width,1173,90+(n+1)*width-9,1179),fill=white if n<=index else stroke)
@@ -102,6 +120,10 @@ def render(brief,output,tts_config,branding=None):
     branding=branding_spec(branding)
     branding.setdefault('mode','news' if brief.get('series_title')=='Noticias de tecnología' else 'experience')
     validate(brief);output.mkdir(parents=True,exist_ok=True)
+    if brief.get('article_cover_source'):
+        from video_evidence import cache_cover,EVIDENCE_ROOT
+        brief['article_cover']=cache_cover(brief['article_cover_source'],EVIDENCE_ROOT.parent,brief['post_id'])
+    if brief.get('script_version',1)>=3 and not brief.get('article_cover'):raise ValueError('Published article cover required for the vertical cover')
     voice=GeminiSpeech(tts_config);chunks=[];cursor=0;sample_rate=None;audio_parts=[];scenes=[]
     if branding['enabled']:
         brand_card(branding,brief,output/'intro.png');brand_card(branding,brief,output/'outro.png',True)
@@ -143,7 +165,10 @@ def render(brief,output,tts_config,branding=None):
     (output/'captions.ass').write_text(header+'\n'.join(events)+'\n')
     from video_motion import encode
     motion=encode(output,scenes,{f'scene-{i:02}.png':scene['visual'] for i,scene in enumerate(brief['scenes'])})
-    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss','1','-i','video.mp4','-frames:v','1','cover.jpg'],cwd=output,check=True,timeout=30)
+    if brief.get('article_cover'):
+        from video_evidence import vertical_cover
+        vertical_cover(brief,output/'cover.jpg')
+    else:subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss','1','-i','video.mp4','-frames:v','1','cover.jpg'],cwd=output,check=True,timeout=30)
     encoded_video=verify_frames(output/'video.mp4',sum(s['frame_count'] for s in scenes))
     audio_report=verify_mastering(audio_report,output/'video.mp4');(output/'audio-mastering.json').write_text(json.dumps(audio_report,indent=2))
     (output/'caption.txt').write_text(brief['caption']+'\n')
@@ -151,6 +176,9 @@ def render(brief,output,tts_config,branding=None):
     manifest={'post_id':brief['post_id'],'account':brief['account'],'duration_seconds':round(cursor,2),'dimensions':[1080,1920],'fps':30,'voice_provider':'gemini','voice_model':voice.model,'voice_name':voice.voice,'synthetic_voice':True,'sources':brief['sources'],'article_url':brief['article_url'],'status':'ready_for_review','published':False,'sha256':digest,'caption_chunks':len(chunks),'music':None,'palette':{'name':'datogedon-grayscale-v1','surfaces':'grayscale','accent':'#ff966f','accent_usage':'key_metric_or_comparison_only'},'motion':motion,'branding':branding,'timeline':scenes,'encoded_video':encoded_video,'audio_mastering':{'integrated_lufs':audio_report['encoded_aac']['input_i'],'true_peak_dbtp':audio_report['encoded_aac']['input_tp'],'two_pass':True}}
     manifest['branding'].update(narration_continues=True,news_ident=ident)
     manifest['extended_video']=target
+    manifest['editorial']=brief.get('editorial');manifest['experiment']=brief.get('experiment')
+    manifest['visual_assets']=[s['visual_data'] for s in brief['scenes'] if s['visual']=='evidence']
+    manifest['cover']={'kind':'vertical_article_cover' if brief.get('article_cover') else 'video_frame','asset':brief.get('article_cover')}
     (output/'tts-usage.json').write_text(json.dumps(voice.report(),ensure_ascii=False,indent=2))
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2));print(json.dumps(manifest,ensure_ascii=False));return manifest
 
@@ -182,6 +210,7 @@ def enqueue(root,post,config):
     from video_finish import branding_spec
     from extended_catalog import related_guide
     brief['extended_video']=related_guide(state,brief)
+    if post.get('_video_cover_source'):brief['article_cover_source']=post['_video_cover_source']
     if brief['extended_video'] and brief['extended_video']['url'] not in brief['caption']:
         brief['caption']+='\n\nGuía completa: '+brief['extended_video']['url']
     try:
@@ -192,7 +221,7 @@ def enqueue(root,post,config):
             branding['intro_title']=branding.get('series_titles',{}).get(mode,branding.get('intro_title','Noticias de tecnología'))
     except (ValueError,OSError):
         queue['jobs'][key]={'post_id':post['id'],'status':'failed','error':'MissingBrandAsset','published':False};store_job(queue_path,key,queue['jobs'][key]);return queue['jobs'][key]
-    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'renderer_version':8},sort_keys=True).encode()).hexdigest()
+    spec_digest=hashlib.sha256(json.dumps({'brief':digest,'tts':config['tts'],'branding':branding,'extended_video':brief['extended_video'],'article_cover_source':brief.get('article_cover_source'),'renderer_version':9},sort_keys=True).encode()).hexdigest()
     previous=queue['jobs'].get(key,{})
     if previous.get('status')=='ready_for_review' and previous.get('render_spec_sha256')==spec_digest and (output/'video.mp4').is_file() and hashlib.sha256((output/'video.mp4').read_bytes()).hexdigest()==previous.get('video_sha256'):return previous
     job={'post_id':post['id'],'article_url':post['link'],'status':'rendering','brief_sha256':digest,'render_spec_sha256':spec_digest,'updated_at':now().isoformat(),'output':str(output),'published':False}
@@ -209,7 +238,7 @@ def enqueue(root,post,config):
         if process.returncode:raise RuntimeError('Local renderer failed')
         manifest=read(output/'manifest.json')
         if not manifest or manifest['post_id']!=post['id'] or manifest.get('published') is not False:raise RuntimeError('Render not verified')
-        job.update(status='ready_for_review',duration_seconds=manifest['duration_seconds'],video_sha256=manifest['sha256'],finished_at=now().isoformat())
+        job.update(status='ready_for_review',duration_seconds=manifest['duration_seconds'],video_sha256=manifest['sha256'],finished_at=now().isoformat(),experiment=manifest.get('experiment'))
     except Exception as error:
         if process and process.poll() is None:
             os.killpg(process.pid,signal.SIGTERM)

@@ -40,7 +40,7 @@ def enqueue(root,post,video,kind):
             platforms[platform]=dict(prior) if prior.get('status') in TERMINAL else {'status':'pending','attempts':0}
         job={'post_id':post['id'],'title':post['title'].get('raw',post['title'].get('rendered','')),'article_url':post['link'],
              'kind':kind,'output':video['output'],'video_sha256':video['video_sha256'],'created_at':now().isoformat(),'platforms':platforms,
-             'tiktok_music_policy':music_policy()}
+             'tiktok_music_policy':music_policy(),'experiment':video.get('experiment')}
         outbox['jobs'][key]=job;write(folder/'outbox.json',outbox)
     return job
 
@@ -71,7 +71,8 @@ def record(root,post_id,platform,status,url=None,proof=None,reason=None):
         if proof:entry['proof']=proof
         if reason:entry['reason']=reason
         if status=='blocked':entry.update(retryable=False)
-        if status=='published':entry.update(published=True,blog_reference='pending')
+        if status=='published':
+            entry.update(published=True,blog_reference='pending');entry.setdefault('published_at',entry['updated_at'])
         write(folder/'outbox.json',outbox)
     return entry
 
@@ -158,7 +159,9 @@ def run(root):
                         selected[platform]={'mode':'upload_if_absent' if entry['status']=='pending' else 'reconcile_only','previous':dict(entry)}
                         entry.update(status='in_progress',attempts=entry.get('attempts',0)+1,started_at=now().isoformat(),next_attempt_at=(now()+timedelta(minutes=20)).isoformat())
                     write(folder/'outbox.json',latest)
-                write(work/'job.json',{**job,'selected_platforms':selected})
+                from social_metrics import targets
+                (work/'observations.json').unlink(missing_ok=True)
+                write(work/'job.json',{**job,'selected_platforms':selected,'measurement_targets':targets(jobs,now())})
                 source=Path(__file__).resolve().parent
                 prompt=(source/'social-publication.txt').read_text()+f'\n\nEJECUCIÓN AUTOMÁTICA AUTORIZADA\nLee job.json. Publica únicamente post_id={key} en selected_platforms. No necesitas aprobación humana. No generes ni modifiques videos/artículos.\nBrowser helper: {sys.executable} {source/"browser-call.py"} JSON\nJSON ejemplo: {{"tool":"list_pages","args":{{}}}}. Para schemas: {{"operation":"tools","names":["click","upload_file"]}}.\nRegistrar resultado: {sys.executable} {source/"social.py"} --state-dir {root} record --post-id {key} --platform PLATFORM --status STATUS [--url URL] [--proof ARCHIVO_JSON] [--reason TEXTO]\nPruebas UI en ~/Movies/Datogedon/review/social-{key}-PLATFORM.txt.\nNo edites outbox.json directamente. Cada plataforma es independiente; registrar su resultado antes de pasar a la siguiente. Si mode=reconcile_only, está prohibido subir de nuevo: localizar/publicar el mismo borrador o verificar URL ya asignada. Si la sesión no permite confirmar identidad, registra blocked y sigue con otras plataformas.\nPrimero consulta list_pages en el relay. No inicies otro session.mjs ni otro Chrome MCP. No leas archivos de claves, cookies, conversaciones ni sesiones de asistentes. Antes de CARGAR registra draft sin URL; desde ese momento un corte exige conciliación, nunca una segunda carga. Guardar URL tan pronto esté asignada. Todo publicado requiere proof.json con owner_verified/public_verified/ai_label_verified/caption_verified/playback_verified=true y snapshot_path existente; YouTube channel_id verificado, otros account=@datogedon. No inventes pruebas.\nSi encuentras video ya publicado aunque el registro local no lo conozca, verifica y registra el existente sin duplicarlo. Si no puedes resolver una plataforma, registra blocked con la causa exacta y sigue; no abandones las demás.\n'
                 with (work/'worker.log').open('a') as log:
@@ -174,6 +177,9 @@ def run(root):
                         entry=latest['jobs'][key]['platforms'][platform]
                         if entry['status']=='in_progress':entry.update(status='uncertain',reason='Worker ended without a confirmed platform receipt')
                     write(folder/'outbox.json',latest)
+                from social_metrics import ingest
+                try:ingest(root,work,latest['jobs'])
+                except (ValueError,OSError,KeyError) as error:write(work/'metrics-error.json',{'error':type(error).__name__})
                 processed.append(key)
             except Exception as error:
                 with locked(root):

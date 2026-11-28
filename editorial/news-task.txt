@@ -31,6 +31,20 @@ Si no puedes contrastar una afirmación central, no publiques. Acusaciones,
 atribuciones de ataques, política controvertida y noticias todavía inciertas se
 registran para revisión humana, sin publicarse automáticamente.
 
+ÁNGULO PERIODÍSTICO:
+Al seleccionar noticias, busca un acontecimiento y una historia que se puedan
+contar: quién lo impulsó, qué lo desató, qué sorprende, quién gana o pierde, qué
+pidió la comunidad o qué decisión cambia. No basta una lista de funciones.
+Una persona célebre, una marca o una controversia solo entra si participa en el
+hecho. No atribuyas indignación general a unos comentarios ni inventes motivos.
+Se permite un titular atractivo, una contradicción o una pregunta genuina,
+siempre con una promesa que el artículo cumple. No convertir afectación posible
+en compromiso confirmado, una prueba específica en resultado universal ni una
+hipótesis en acusación. Mostrar temprano la condición que cambia la conclusión.
+Cada detalle del gancho se contrasta antes de redactar el corto. En news-review
+registra angle, hook_claim, supporting_sources, scope y unknowns. Si el asunto no
+tiene un ángulo honesto para un corto, el artículo puede publicarse sin forzarlo.
+
 Compara el tema y sus fuentes con TODOS los posts de queue.json y el catálogo
 publicado para evitar contar otra vez el mismo acontecimiento. editorial_id estable
 por acontecimiento (no por hora, idioma ni URL del periódico); una noticia repetida

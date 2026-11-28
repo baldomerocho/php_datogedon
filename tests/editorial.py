@@ -214,12 +214,54 @@ class PublicationDateReconciliation(unittest.TestCase):
                 self.assertEqual(read(root/'queue.json')['posts'][0]['date'],date)
 
 
+class EarlyMetrics(unittest.TestCase):
+    def test_only_matching_public_receipts_create_deduplicated_observations(self):
+        from social_metrics import ingest,targets
+        from datetime import timezone,timedelta
+        current=datetime.now(timezone.utc);published=current-timedelta(hours=3)
+        jobs={'1':{'platforms':{'tiktok':{'status':'published','url':'https://www.tiktok.com/@datogedon/video/1','published_at':published.isoformat()}}}}
+        self.assertEqual(len(targets(jobs,current)),1)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);work=root/'work';proof=root/'Movies/Datogedon/review/frame.txt';proof.parent.mkdir(parents=True);proof.write_text('Synthetic creator UI')
+            row={'post_id':1,'platform':'tiktok','url':jobs['1']['platforms']['tiktok']['url'],'captured_at':current.isoformat(),'snapshot_path':str(proof),'views':100}
+            write(work/'observations.json',[row,{**row,'url':'https://www.tiktok.com/@other/video/1'},{**row,'views':True}])
+            with patch('social_metrics.Path.home',return_value=root):
+                self.assertEqual(ingest(root,work,jobs),1);self.assertEqual(ingest(root,work,jobs),0)
+            record=next(iter(read(root/'videos/distribution/metrics.json')['observations'].values()))
+            self.assertEqual(record['age_hours'],3);self.assertIsNone(record['completion_percent'])
+
+
 class VideoDrafts(unittest.TestCase):
     def brief(self):
         return {'post_id':1,'account':'@datogedon','article_url':'https://datogedon.com/synthetic/','sources':['https://example.invalid/source'],'topic_label':'Synthetic technology','date_label':'Synthetic date','source_label':'Synthetic source','scenes':[{'headline':'A concise synthetic headline','visual':'context','visual_data':{'title':'Context','labels':['One','Two']},'chunks':['A synthetic description explaining a verified change and its scope without adding unsupported claims.']} for _ in range(3)]}
     def test_real_video_brief_validates_without_external_runtime(self):
         from video import validate
         self.assertEqual(validate(self.brief())['post_id'],1)
+    def test_sourced_visual_is_bound_to_reviewed_file_and_citation(self):
+        import hashlib,struct,zlib
+        from video import validate
+        import video_evidence
+        def chunk(kind,data):return struct.pack('>I',len(data))+kind+data+struct.pack('>I',zlib.crc32(kind+data)&0xffffffff)
+        png=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',320,180,8,2,0,0,0))+chunk(b'IDAT',zlib.compress((b'\0'+b'\x80\x80\x80'*320)*180))+chunk(b'IEND',b'')
+        with tempfile.TemporaryDirectory() as directory,patch.object(video_evidence,'EVIDENCE_ROOT',Path(directory)/'public'):
+            root=Path(directory)/'public';root.mkdir();image=root/'source.png';image.write_bytes(png)
+            b=self.brief();b['script_version']=3;b['editorial']={'angle':'surprise','promise':'Verified change','payoff':'Explain the change','source_url':b['sources'][0]}
+            data={'asset':str(image),'sha256':hashlib.sha256(png).hexdigest(),'source_url':b['sources'][0],'credit':'Synthetic source','kind':'screenshot','caption':'Published example'}
+            b['scenes'][0].update(visual='evidence',visual_data=data)
+            self.assertIs(validate(b),b)
+            for change in [{'sha256':'wrong'},{'source_url':'https://other.invalid/'},{'kind':'generated_proof'}]:
+                with self.subTest(change=change),self.assertRaises(ValueError):
+                    b['scenes'][0]['visual_data']={**data,**change};validate(b)
+            outside=Path(directory)/'private.png';outside.write_bytes(png)
+            b['scenes'][0]['visual_data']={**data,'asset':str(outside)}
+            with self.assertRaisesRegex(ValueError,'public evidence'):validate(b)
+    def test_v3_requires_real_visual_and_documented_hook(self):
+        from video import validate
+        b=self.brief();b['script_version']=3
+        b['scenes'][0].update(visual='flow',visual_data={'from':['Before'],'to':['After'],'condition':'Documented rule','check':'Published result'})
+        with self.assertRaisesRegex(ValueError,'promise'):validate(b)
+        b['editorial']={'angle':'curiosity','promise':'A promise','payoff':'An answer','source_url':b['sources'][0]}
+        with self.assertRaisesRegex(ValueError,'concrete sourced visual'):validate(b)
     def test_explanation_can_exceed_old_budget_but_remains_bounded(self):
         from video import validate
         b=self.brief()

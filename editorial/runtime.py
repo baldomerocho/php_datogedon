@@ -167,12 +167,14 @@ def execute(root,args):
     try:return _locked(root,args,current,day,config,private)
     finally:lock.close()
 
-def writer_command(command,root,news=False):
+def writer_command(command,root,news=False,evidence_dir=None):
     # Explicit per-process network permission; keep workspace filesystem protections.
     args=[command,'-c','default_permissions="datogedon-editorial"','-c','permissions.datogedon-editorial.extends=":workspace"',
           '-c','permissions.datogedon-editorial.network.enabled=true']
     if news:args.append('--search')
-    return args+['exec','--skip-git-repo-check','-C',str(root),'--color','never','-o',str(root/'private/last-editorial-run.txt'),'-']
+    execution=['exec','--skip-git-repo-check','-C',str(root),'--color','never','-o',str(root/'private/last-editorial-run.txt')]
+    if evidence_dir is not None:execution+=['--add-dir',str(evidence_dir)]
+    return args+execution+['-']
 
 def cycle_changes(before,after,queue,cycle):
     previous={p['id']:p['status'] for p in before}
@@ -242,12 +244,18 @@ def _locked(root,args,current,day,config,private):
         if not command:raise RuntimeError('Codex no está en PATH')
         prompt=(root/('NEWS-TASK.txt' if cycle.get('mode')=='news' else 'DAILY-TASK.txt')).read_text().replace('{{CHECK_POST}}',shlex.join([sys.executable,str(Path(__file__).with_name('check-post.py'))]))+('\nLee private/cycle-context.json: una entrada como máximo, publicación en este ciclo y fecha local de hoy; no reserves días futuros.\n' if cycle else '\nConsulta private/editorial-calendar.json; usa solo sus next_slots para nuevas entradas. No cambies fechas existentes.\n')
         prompt+='\n'+Path(__file__).with_name('common-task.txt').read_text().replace('{{CHECK_POST}}',shlex.join([sys.executable,str(Path(__file__).with_name('check-post.py'))])).replace('{{LINK_CHECK}}',shlex.join([sys.executable,str(Path(__file__).with_name('internal_links.py'))]))
-        if cycle and config.get('video',{}).get('enabled'):prompt+='\n'+Path(__file__).with_name('video-task.txt').read_text()
+        if cycle and config.get('video',{}).get('enabled'):
+            video_config=config['video'];capture=[shutil.which('node') or 'node',str(Path(__file__).with_name('capture-evidence.mjs')),'--modules-root',video_config.get('evidence_node_modules',str(Path(__file__).resolve().parent.parent/'node_modules'))]
+            video_state=Path(video_config['state_dir']).expanduser()
+            (video_state/'evidence').mkdir(parents=True,exist_ok=True)
+            video_prompt=Path(__file__).with_name('video-task.txt').read_text().replace('{{CAPTURE_EVIDENCE}}',shlex.join(capture)).replace('{{EVIDENCE_DIR}}',str(video_state/'evidence')).replace('{{EXPERIMENT_FILE}}',str(video_state/'editorial-experiment.json'))
+            prompt+='\n'+video_prompt
         from internal_links import catalog
         if cycle:write(private/'internal-link-catalog.json',catalog(wp))
         with (private/'worker.log').open('a') as log:
             os.chmod(private/'worker.log',0o600)
-            process=subprocess.Popen(writer_command(command,root,cycle.get('mode')=='news'),stdin=subprocess.PIPE,stdout=log,stderr=log,text=True,start_new_session=True)
+            evidence_dir=video_state/'evidence' if cycle and config.get('video',{}).get('enabled') else None
+            process=subprocess.Popen(writer_command(command,root,cycle.get('mode')=='news',evidence_dir),stdin=subprocess.PIPE,stdout=log,stderr=log,text=True,start_new_session=True)
             try:process.communicate(prompt,timeout=2700)
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid,signal.SIGTERM)
@@ -277,7 +285,10 @@ def _locked(root,args,current,day,config,private):
             from video import enqueue
             jobs=[]
             for summary in new:
-                try:jobs.append(enqueue(root,wp.get(f"posts/{summary['id']}?context=edit")[0],config['video']))
+                try:
+                    video_post=wp.get(f"posts/{summary['id']}?context=edit")[0]
+                    if video_post.get('featured_media'):video_post['_video_cover_source']={'source_url':wp.get(f"media/{video_post['featured_media']}?context=edit")[0]['source_url']}
+                    jobs.append(enqueue(root,video_post,config['video']))
                 except Exception as error:jobs.append({'post_id':summary['id'],'status':'failed','error':type(error).__name__})
             status['video_jobs']=[{k:j[k] for k in ['post_id','status'] if k in j} for j in jobs]
             if any(j['status']!='ready_for_review' for j in jobs):notify(root,'video_pending','El artículo se publicó, pero su video requiere revisión técnica. No se subió a TikTok.')
